@@ -1,0 +1,14 @@
+# All delays are in seconds
+
+# Delays to get updated data from Google
+imagesFeedUpdateDelay=3000
+newsFeedUpdateDelay=300
+
+# Delay between global (pinned) news rotations
+globalNewsSwapDelay=60
+
+# Delay between standard (non-pinned) news rotations
+newsSwapDelay=90
+
+# Delay between image rotations
+imageSwapDelay=50

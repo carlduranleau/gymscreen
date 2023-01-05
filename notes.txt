@@ -1,0 +1,27 @@
+- Install Python 2.7
+- Set default to python 2.7 if another version is available
+	- sudo update-alternatives --install /usr/bin/python python /usr/bin/python2.7 1
+	- sudo update-alternatives --install /usr/bin/python python /usr/bin/python2.7 2
+	- sudo update-alternatives --config python
+- https://github.com/kiwiz/gkeepapi
+- pip install gkeepapi
+- Create folder 'gymnamic' and add all files under it
+- pip install flask flask-restful
+- Enable Drive API through https://developers.google.com/drive/api/v3/quickstart/python?authuser=5
+- pip install --upgrade google-api-python-client google-auth-httplib2 google-auth-oauthlib
+
+HTTP web server
+- -- cd to the html folder and then `python -m SimpleHTTPServer 5001` --
+- Now on 5002 using flask 
+
+
+
+Service => 5002
+Web => 5001
+
+
+Known bugs
+----------
+
+After refresh:
+	- Overlapping global news and maybe news.
