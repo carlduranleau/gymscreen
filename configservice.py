@@ -1,5 +1,4 @@
 from flask_restful import Resource
-from filecredential import FileCredential
 from configfeeder import ConfigFeeder
 from flask import make_response
 

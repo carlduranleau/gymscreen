@@ -1,6 +1,6 @@
-from googleapiclient.discovery import build
+from gcsa.google_calendar import GoogleCalendar as GoogleCalendarAPI
 
-class GoogleDrive:
+class GoogleCalendar:
 
 	def __init__(self, authenticator):
 		self.authenticator = authenticator
@@ -8,7 +8,7 @@ class GoogleDrive:
 	def getService(self):
 		try:
 			creds = self.authenticator.authenticate();
-			return build('drive', 'v3', credentials=creds)
+			return GoogleCalendarAPI(credentials=creds)
 		except:
 			print('ERROR: Cannot connect to file feed')
 			raise

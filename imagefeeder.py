@@ -3,23 +3,24 @@ import pickle
 import os.path
 from downloadthread import DownloadThread
 from googledrive import GoogleDrive
+from googleauthenticator import GoogleAuthenticator
 import os
 import signal
 import json
 
-class ImageFeeder(GoogleDrive):
+class ImageFeeder:
 
 	ALLOWED_EXTENSIONS = ['png', 'jpg']
 	PERSIST_PATH = 'images'
 
 	def __init__(self, credential_file):
-		GoogleDrive.__init__(self, credential_file)
-		signal.signal(signal.SIGTERM, self._service_shutdown)
-		signal.signal(signal.SIGINT, self._service_shutdown)
 		self.files = None
+		self.results = None
+		self.driveAPI = GoogleDrive(GoogleAuthenticator(credential_file))
 		self.download_thread = DownloadThread(self)
 		self.download_thread.start()
-		self.results = None
+		signal.signal(signal.SIGTERM, self._service_shutdown)
+		signal.signal(signal.SIGINT, self._service_shutdown)
 
 	def _service_shutdown(self, signum, frame):
 		print('Waiting for application thread to stop...')
@@ -28,10 +29,8 @@ class ImageFeeder(GoogleDrive):
 		os._exit(0)
 
 	def load(self):
-		self.authenticate()
-
 		# Call the Drive v3 API
-		self.results = self.service.files().list(fields="*",q="trashed=False").execute()
+		self.results = self.driveAPI.getService().files().list(fields="*",q="trashed=False").execute()
 		drivefiles = self.results.get('files', [])
 		filenames = []
 		self.files = dict()
@@ -45,7 +44,7 @@ class ImageFeeder(GoogleDrive):
 		if filename in self.files:
 			try:
 				print('Downloading {}'.format(filename))
-				content = self.service.files().get_media(fileId=self.files[filename]).execute()
+				content = self.driveAPI.getService().files().get_media(fileId=self.files[filename]).execute()
 				with open('{}/{}'.format(target, filename), 'wb') as f:
 					f.write(content)
 				return True

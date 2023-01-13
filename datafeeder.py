@@ -69,7 +69,7 @@ class DataFeeder:
 		return self._global_news_data
 
 	def getCategorizedNews(self):
-		return self._global_news_data
+		return self._news_data
 
 	def _getColor(self, keep_color):
 		return self.COLORS.get(str(keep_color), '#ffffff')

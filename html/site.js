@@ -9,7 +9,7 @@ CONFIG_UPDATE_DELAY = 60000					// Configuration expiration delay in ms
 animationThreads = new Map();						// List of active animation threads
 configurationMap = new Map();				// Configuration Map (property, value)
 maintenanceMode = false;
-DEBUG = true;
+DEBUG = false;
 CONFIG_REFRESH_IN_PROGRESS = false;
 
 /*
@@ -187,3 +187,6 @@ window.onresize = function (event) {
 	HIDE_MARGIN = MAX_WINDOW_WIDTH + BOX_SPACING;
 }
 */
+window.onload = function(event) {
+	initTimeWidget();
+}

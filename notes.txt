@@ -1,6 +1,6 @@
-- Install Python 2.7
-- Set default to python 2.7 if another version is available
-	- sudo update-alternatives --install /usr/bin/python python /usr/bin/python2.7 1
+- Install Python 3.8+ (Tested with 3.11.1)
+- Set default to python 3.11.1 if another version is available
+	- sudo update-alternatives --install /usr/bin/python python /usr/bin/python3.11 1
 	- sudo update-alternatives --install /usr/bin/python python /usr/bin/python2.7 2
 	- sudo update-alternatives --config python
 - https://github.com/kiwiz/gkeepapi
@@ -10,18 +10,23 @@
 - Enable Drive API through https://developers.google.com/drive/api/v3/quickstart/python?authuser=5
 - pip install --upgrade google-api-python-client google-auth-httplib2 google-auth-oauthlib
 
-HTTP web server
-- -- cd to the html folder and then `python -m SimpleHTTPServer 5001` --
+HTTP web server (Not needed anymore. Every file request is now handled by the FileService Python class)
+- -- cd to the html folder and then `python -m http.server 5001` --
+
+Python Server
 - Now on 5002 using flask 
 
-
+$ python app.py
 
 Service => 5002
-Web => 5001
+Web => 5001 (Obsolete)
 
+Access url: http://localhost:5002/
+
+
+Git repo: https://github.com/carlduranleau/gymscreen
 
 Known bugs
 ----------
 
-After refresh:
-	- Overlapping global news and maybe news.
+Animation threads get out-of-sync in slideshow component when browser page isn't in the foreground.
