@@ -1,13 +1,12 @@
 from flask_restful import Resource
-from filecredential import FileCredential
 from calendarfeeder import CalendarFeeder
-from datafeeder import DataFeeder
+from newsfeeder import NewsFeeder
 from flask import make_response
 
-class RestService(Resource):
+class DataService(Resource):
 
-	newsfeeder = DataFeeder(FileCredential('token'))
-	calendarfeeder = CalendarFeeder(FileCredential('token'))
+	newsfeeder = NewsFeeder()
+	calendarfeeder = CalendarFeeder()
 
 	def get(self, path=None):
 		feeder = None

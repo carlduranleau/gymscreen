@@ -12,8 +12,8 @@ class ConfigFeeder:
 	CONFIG_FILE_NAME = 'config.properties'
 	PERSIST_PATH = 'config'
 
-	def __init__(self, credential_file):
-		self.driveAPI = GoogleDrive(GoogleAuthenticator(credential_file))
+	def __init__(self):
+		self.driveAPI = GoogleDrive(GoogleAuthenticator())
 		self.textContent=''
 
 	def _load_last_configuration(self):

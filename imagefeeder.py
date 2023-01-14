@@ -1,23 +1,19 @@
 from __future__ import print_function
-import pickle
-import os.path
 from downloadthread import DownloadThread
-from googledrive import GoogleDrive
-from googleauthenticator import GoogleAuthenticator
 import os
 import signal
 import json
 
 class ImageFeeder:
 
+	# Background update thread parameters
 	ALLOWED_EXTENSIONS = ['png', 'jpg']
+	WAIT_DELAY_IN_SECS = 10
 	PERSIST_PATH = 'images'
 
-	def __init__(self, credential_file):
-		self.files = None
-		self.results = None
-		self.driveAPI = GoogleDrive(GoogleAuthenticator(credential_file))
-		self.download_thread = DownloadThread(self)
+	def __init__(self):
+		self.files = []
+		self.download_thread = DownloadThread(self.PERSIST_PATH, self.ALLOWED_EXTENSIONS, self.WAIT_DELAY_IN_SECS)
 		self.download_thread.start()
 		signal.signal(signal.SIGTERM, self._service_shutdown)
 		signal.signal(signal.SIGINT, self._service_shutdown)
@@ -29,38 +25,31 @@ class ImageFeeder:
 		os._exit(0)
 
 	def load(self):
-		# Call the Drive v3 API
-		self.results = self.driveAPI.getService().files().list(fields="*",q="trashed=False").execute()
-		drivefiles = self.results.get('files', [])
-		filenames = []
-		self.files = dict()
-		for file in drivefiles:
-			if file.get('fileExtension') is not None and file.get('fileExtension').lower() in self.ALLOWED_EXTENSIONS:
-				self.files[file.get('name')] = file.get('id')
-				filenames.append(file.get('name'))
-		self.download_thread.updateFiles(filenames)
+		self.files = self._getFiles()
 
-	def download(self, filename, target):
-		if filename in self.files:
-			try:
-				print('Downloading {}'.format(filename))
-				content = self.driveAPI.getService().files().get_media(fileId=self.files[filename]).execute()
-				with open('{}/{}'.format(target, filename), 'wb') as f:
-					f.write(content)
+	def _getFiles(self):
+		files = []
+		for root, dirs, files in os.walk(self.PERSIST_PATH):  
+			for filename in files:
+				if self._isValidFile(filename):
+					files.append(filename)
+		return files
+
+	def _isValidFile(self, filename):
+		ext_index = filename.find(".")
+		if ext_index > -1:
+			extension = filename[ext_index:]
+			if extension and extension.lower() in self.ALLOWED_EXTENSIONS:
 				return True
-			except:
-				print('Unable to download {}'.format(filename))
 		return False
 
 	def toJSON(self):
 		json_output = ''
-		if self.results:
-			for file in self.files:
-				if self.download_thread.is_available(file):
-					if json_output:
-						json_output += ","
-					else:
-						json_output = ''
-					json_output += '{{"name":"{}","url":"/{}/{}"}}'.format(file, self.PERSIST_PATH, file)
+		for file in self.files:
+			if json_output:
+				json_output += ","
+			else:
+				json_output = ''
+			json_output += '{{"name":"{}","url":"/{}/{}"}}'.format(file, self.PERSIST_PATH, file)
 		return '{"files":[' + json_output + ']}'
 

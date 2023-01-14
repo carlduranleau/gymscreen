@@ -4,7 +4,6 @@ import os.path
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
-from downloadthread import DownloadThread
 import os
 import signal
 
@@ -12,9 +11,6 @@ class GoogleAuthenticator:
 
 	# If modifying these scopes, delete the file token.pickle.
 	SCOPES = ['https://www.googleapis.com/auth/drive','https://www.googleapis.com/auth/calendar']
-
-	def __init__(self, credential_file):
-		self.credential_file = credential_file
 
 	def authenticate(self):
 		creds = None
@@ -30,7 +26,7 @@ class GoogleAuthenticator:
 				creds.refresh(Request())
 			else:
 				flow = InstalledAppFlow.from_client_secrets_file(
-					self.credential_file, self.SCOPES)
+					'credentials.json', self.SCOPES)
 				creds = flow.run_local_server()
 			# Save the credentials for the next run
 			with open('token.pickle', 'wb') as token:

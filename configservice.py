@@ -4,7 +4,7 @@ from flask import make_response
 
 class ConfigService(Resource):
 
-	feeder = ConfigFeeder('credentials.json')
+	feeder = ConfigFeeder()
 
 	def get(self):
 		self.feeder.load()

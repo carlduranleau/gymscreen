@@ -1,36 +1,29 @@
 import os
 import time
 import threading
+from googledrive import GoogleDrive
+from googleauthenticator import GoogleAuthenticator
 
 class DownloadThread(threading.Thread):
 
-	WAIT_DELAY_IN_SECS = 10
-	PERSIST_PATH = 'images'
 
-	def __init__(self, google_drive):
+	def __init__(self, cache_path, file_extensions, update_delay):
 		threading.Thread.__init__(self)
-		self.pending_files = []
-		self.downloaded_files = []
-		self.complete = True
-		self.google_drive = google_drive
+		self.cache_path = cache_path
+		self.file_extensions = file_extensions
+		self.update_delay = update_delay
+		self.driveAPI = GoogleDrive(GoogleAuthenticator())
 		self.running = True;
 
 	def run(self):
+		print('Download thread started')
 		while(self.running):
-			if not self.complete and len(self.pending_files) > 0:
-				processed = []
-				for i in range(len(self.pending_files)):
-					file = self.pending_files[i]
-					if self.google_drive.download(file, self.PERSIST_PATH):
-						processed.append(file)
-					else:
-						print('ERROR: Unable to download {}'.format(file.get('name')))
-				for file in processed:
-					self.pending_files.remove(file)
-				self.complete = len(self.pending_files) == 0
-			self._update_downloaded_files()
-			self._sleep_thread(self.WAIT_DELAY_IN_SECS)
+			self._sleep_thread(self.update_delay)
+			self._updateFiles()
 		print('Download thread stopped')
+
+	def shutdown(self):
+		self.running = False
 
 	def _sleep_thread(self, delay_in_secs):
 		i = 0
@@ -38,26 +31,58 @@ class DownloadThread(threading.Thread):
 			i += 1;
 			time.sleep(1)
 
-	def shutdown(self):
-		self.running = False
+	def _getRemoteFilenames(self):
+		# Call the Drive v3 API
+		results = self.driveAPI.getService().files().list(fields="*",q="trashed=False").execute()
+		drivefiles = results.get('files', [])
+		files = dict()
+		for file in drivefiles:
+			if file.get('fileExtension') is not None and file.get('fileExtension').lower() in self.file_extensions:
+				files[file.get('name')] = file.get('id')
+		return files
 
-	def _update_downloaded_files(self):
-		self.downloaded_files = []
-		for root, dirs, files in os.walk(self.PERSIST_PATH):  
+	def _getLocalFilenames(self):
+		files = []
+		for root, dirs, files in os.walk(self.cache_path):  
 			for filename in files:
-				self.downloaded_files.append(filename)
+				if self._isValidFile(filename):
+					files.append(filename)
+		return files
 
-	def is_available(self, filename):
-		return filename in self.downloaded_files
+	def _isValidFile(self, filename):
+		ext_index = filename.find(".")
+		if ext_index > -1:
+			extension = filename[ext_index:]
+			if extension and extension.lower() in self.file_extensions:
+				return True
+		return False
 
-	def updateFiles(self, new_files):
-		self._update_downloaded_files()
-		self.pending_files = []
-		for file in self.downloaded_files:
-			if not file in new_files:
-				os.remove('{}/{}'.format(self.PERSIST_PATH, file))
-				self.downloaded_files.remove(file)
-		for file in new_files:
-			if not file in self.downloaded_files:
-				self.pending_files.append(file)
-		self.complete = len(self.pending_files) == 0
+	def _updateFiles(self):
+		if not self.running:
+			return None
+		remote_files = self._getRemoteFilenames()
+		local_files = self._getLocalFilenames()
+		print('Local files count:{}'.format(len(local_files)))
+		print('Remote files count:{}'.format(len(remote_files.keys())))
+		
+		# Remove local file not found remotely
+		for file in local_files:
+			if not file in remote_files.keys():
+				print('Removing {}'.format(file))
+				os.remove('{}/{}'.format(self.cache_path, file))
+		
+		# Download remote file not found locally
+		for file in remote_files.keys():
+			if not file in local_files:
+				self._download(file, remote_files[file], self.cache_path)
+
+	def _download(self, filename, file_id, target):
+		try:
+			print('Downloading {}'.format(filename))
+			content = self.driveAPI.getService().files().get_media(fileId=file_id).execute()
+			with open('{}/{}'.format(target, filename), 'wb') as f:
+				f.write(content)
+			return True
+		except:
+			print('Unable to download {}'.format(filename))
+		return False

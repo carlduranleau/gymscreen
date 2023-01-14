@@ -5,7 +5,7 @@ from flask import make_response
 
 class FileService(Resource):
 
-	feeder = ImageFeeder('credentials.json')
+	feeder = ImageFeeder()
 
 	def get(self):
 		self.feeder.load()

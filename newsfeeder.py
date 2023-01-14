@@ -1,11 +1,12 @@
+from filecredential import FileCredential
 import gkeepapi
 
-class DataFeeder:
+class NewsFeeder:
 
 	COLORS = { 'ColorValue.Teal': '#9ff0f4', 'ColorValue.Blue':'#b9ecf7', 'ColorValue.DarkBlue':'#a5c6ef', 'ColorValue.Gray':'#dee2e8', 'ColorValue.Purple':'#d7b5e5', 'ColorValue.Pink':'#fcc9f8', 'ColorValue.Brown':'#ddc1a6', 'ColorValue.Red':'#f79999', 'ColorValue.Orange':'#ffbd26', 'ColorValue.Yellow':'#f7eb85', 'ColorValue.Green':'#cff48d', 'ColorValue.White':'#ffffff' }
 
-	def __init__(self, credential):
-		self.credential = credential
+	def __init__(self):
+		self.credential = FileCredential('token')
 		self._global_news_data = []
 		self._news_data = []
 		self._loading_error_count = 0

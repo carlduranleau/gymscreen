@@ -9,13 +9,13 @@ import json
 
 class CalendarFeeder:
 
-	def __init__(self, credential_file):
+	def __init__(self):
 		self._events_data = []
 		self._loading_error_count = 0
 		self.calendar = None
 		self.range_start = None
 		self.range_end = None
-		self.calendarAPI = GoogleCalendar(GoogleAuthenticator(credential_file))
+		self.calendarAPI = GoogleCalendar(GoogleAuthenticator())
 
 	def _reset(self):
 		self._events_data = []
