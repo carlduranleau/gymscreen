@@ -1,24 +1,15 @@
 HIDE_MARGIN = MAX_WINDOW_WIDTH + BOX_SPACING;	// Left security margin to hide news boxes
 NEWS_ROTATION_DEFAULT_INTERVAL = 20000			// News rotation interval in ms
-GLOBAL_NEWS_ROTATION_DEFAULT_INTERVAL = 15000;	// Global new rotation interval in ms
 FEED_REFRESH_DEFAULT_INTERVAL = 35000			// News feed refresh interval in ms
 
 newsRefreshTimerId = 0;		// id of the setInterval timer to load and refresh news
 newsMoveTimerId = 0;		// id of the setInterval timer to move the next news
-globalNewsMoveTimerId = 0;	// id of the setInterval timer to move the next global news
 
 // News management
 allNewsBoxes = [];			// All available news
 visibleNewsBoxes = [];		// All currently visible news
 nextVisibleNewsBoxes = [];	// List of news to be displayed on next refresh
 nextTopNews = 0;			// Index of the next news to be displayed first
-
-// Global News management
-globalNewsContainer = undefined	// Fixed box where global news rotate
-allGlobalNewsBoxes = [];		// All available global news
-visibleGlobalNewsBoxes = [];	// Currently visible global news
-nextVisibleGlobalNewsBoxes = [];// Next global news to be visible
-nextTopGlobalNews = 0;			// Index of the next global news to be displayed first
 visibleNewsTotalHeight = 0;		// Total height of all visible news box
 
 // Create UI news box and hide it
@@ -42,66 +33,15 @@ function createNewsBox(title, message, color) {
 	return newsBox;
 }
 
-// Create UI global news box and hide it
-function createGlobalNewsBox(title, message, color, container) {
-	globalNewsBoxContainer = document.createElement("div");
-	globalNewsBoxContainer.setAttribute("class", "globalnewsbox");
-	globalNewsTitleContainer = document.createElement("p");
-	globalNewsBoxContainer.appendChild(globalNewsTitleContainer);
-	titleContainer = document.createElement("h3");
-	titleContainer.innerHTML = title;
-	globalNewsTitleContainer.appendChild(titleContainer);
-	messageContainer = document.createElement("p");
-	globalNewsBoxContainer.appendChild(messageContainer);
-	messageContainer.innerHTML = message;
-	globalNewsBoxContainer.style.top = parseInt(container.clientHeight) + BOX_SPACING;
-	globalNewsBoxContainer.style.left = (BOX_SPACING - 10) + "px";
-	container.appendChild(globalNewsBoxContainer);
-	globalNewsBoxContainer.style.top = -(parseInt(globalNewsBoxContainer.clientHeight) + BOX_SPACING) + "px";
-	return globalNewsBoxContainer;
-}
-
-// Create UI news box and hide it
-function createGlobalNewsContainer(color) {
-	globalNewsContainer = document.createElement("div");
-	globalNewsContainer.setAttribute("class", "globalnewscontainer");
-	if (allNewsBoxes.length > 0) {
-		globalNewsContainer.style.width = (parseInt(allNewsBoxes[0].box.style.left) - (BOX_SPACING * 3)) + "px";
-	} else {
-		globalNewsContainer.style.width = (MAX_WINDOW_WIDTH - (BOX_SPACING * 2)) + "px";
-	}
-	globalNewsContainer.style.left = BOX_SPACING + "px";
-	globalNewsContainer.style.top = BOX_SPACING + "px";
-	document.body.appendChild(globalNewsContainer);
-	return globalNewsContainer;
-}
-
 // Add a new news to the available news list
-function addNews (news) {
-	var news = new News(news.id, createNewsBox(news.title, news.content, news.color));
+function addNews (newNews) {
+	var news = new News(newNews.id, createNewsBox(newNews.title, newNews.content, newNews.color));
 	allNewsBoxes.push(news);
-}
-
-// Add a new news to the available news list
-function addGlobalNews (news) {
-	if (globalNewsContainer == undefined) {
-		createGlobalNewsContainer("");
-	}
-	var news = new News(news.id, createGlobalNewsBox(news.title, news.content, news.color, globalNewsContainer));
-	allGlobalNewsBoxes.push(news);
-	if (nextVisibleGlobalNewsBoxes.length == 0) {
-		nextVisibleGlobalNewsBoxes.push(0);
-	}
 }
 
 function newsAnimationInProgress() {
 	for (var i = 0; i < allNewsBoxes.length; i++) {
 		if(allNewsBoxes[i].animId != -1) {
-			return true;
-		}
-	}
-	for (var i = 0; i < allGlobalNewsBoxes.length; i++) {
-		if(allGlobalNewsBoxes[i].animId != -1) {
 			return true;
 		}
 	}
@@ -117,19 +57,6 @@ function clearNews () {
 	}
 	allNewsBoxes = [];
 	nextVisibleNewsBoxes = [];
-}
-
-// Remove all global news from available news list
-function clearGlobalNews () {
-	for (var i = 0; i < allGlobalNewsBoxes.length; i++) {
-		if (allGlobalNewsBoxes[i].animId != -1) {
-			stopNewsAnim(allGlobalNewsBoxes[i]);
-		}
-		globalNewsContainer.removeChild(allGlobalNewsBoxes[i].box);
-	}
-	allGlobalNewsBoxes = [];
-	nextVisibleGlobalNewsBoxes = [];
-	visibleGlobalNewsBoxes = [];
 }
 
 // Update nextVisibleNewsBoxes 
@@ -169,43 +96,6 @@ function organizeNews() {
 	}
 }
 
-// Update nextVisibleGlobalNewsBoxes 
-function organizeGlobalNews() {
-	if (allGlobalNewsBoxes.length == 0) {
-		nextVisibleGlobalNewsBoxes = [];
-		return;
-	}
-
-	maxHeight = parseInt(globalNewsContainer.clientHeight);
-	totalHeight = 0;
-	nextVisibleGlobalNewsBoxes = [];
-	lastIndex = allGlobalNewsBoxes.length - 1;
-	var i = nextTopGlobalNews;
-	for (i = nextTopGlobalNews; i < allGlobalNewsBoxes.length; i++) {
-		totalHeight = totalHeight + parseInt(allGlobalNewsBoxes[i].box.clientHeight);
-		if (totalHeight <= maxHeight) {
-			if (nextVisibleGlobalNewsBoxes.includes(allGlobalNewsBoxes[i])) {
-				break;
-			}
-			nextVisibleGlobalNewsBoxes.push(allGlobalNewsBoxes[i]);
-
-			// Process the array as an endless circle
-			if (i == lastIndex) {
-				i = -1;
-			}
-		} else {
-			break;
-		}
-	}
-	nextTopGlobalNews = i;
-
-	// Prepare to return to the first news if we are at the end.
-	if (nextTopGlobalNews > lastIndex) {
-		nextTopGlobalNews = 0;
-	}
-}
-
-
 // Move a news box 1 pixel toward its destination. Used with animation timer.
 function animNewsBox(newsBox, xPosition, yPosition) {
 	box = newsBox.box
@@ -244,49 +134,11 @@ function setZIndex() {
 	}
 }
 
-// Update screen with new nextVisibleGlobalNewsBoxes
-function rotateGlobalNews() {
-
-	if (newsAnimationInProgress()) {
-		waitForNewsAnimation(rotateGlobalNews);
-		return;
-	}
-
-	organizeGlobalNews();
-
-	// Hide current global news if we have another to show
-	if (visibleGlobalNewsBoxes.length > 0 || nextVisibleGlobalNewsBoxes.length > 0) {
-		for (var i = 0; i < visibleGlobalNewsBoxes.length; i++) {
-			if (!nextVisibleGlobalNewsBoxes.includes(visibleGlobalNewsBoxes[i])) {
-				if (visibleGlobalNewsBoxes[i].animId != -1) {
-					stopNewsAnim(visibleGlobalNewsBoxes[i]);
-				}
-				animId = startAnimThread(setInterval(animNewsBox, 5, visibleGlobalNewsBoxes[i], BOX_SPACING - 10, parseInt(globalNewsContainer.clientHeight) + BOX_SPACING), "Hide Global New #" + visibleGlobalNewsBoxes[i].id);
-				visibleGlobalNewsBoxes[i].animId = animId;
-			}
-		}
-		currentHeight = 0;
-		for (var i = 0; i < nextVisibleGlobalNewsBoxes.length; i++) {
-			if (!visibleGlobalNewsBoxes.includes(nextVisibleGlobalNewsBoxes[i])) {
-				nextVisibleGlobalNewsBoxes[i].box.style.left = (BOX_SPACING - 10) + "px";
-				nextVisibleGlobalNewsBoxes[i].box.style.top = -(parseInt(nextVisibleGlobalNewsBoxes[i].box.clientHeight) + BOX_SPACING) + "px";
-			}
-			if (nextVisibleGlobalNewsBoxes[i].animId != -1) {
-				stopNewsAnim(nextVisibleGlobalNewsBoxes[i]);
-			}
-			animId = startAnimThread(setInterval(animNewsBox, 5, nextVisibleGlobalNewsBoxes[i], BOX_SPACING - 10, currentHeight), "Show Global New #" + nextVisibleGlobalNewsBoxes[i].id);
-			nextVisibleGlobalNewsBoxes[i].animId = animId;
-			currentHeight += parseInt(nextVisibleGlobalNewsBoxes[i].box.clientHeight);
-		}
-		visibleGlobalNewsBoxes = nextVisibleGlobalNewsBoxes;
-	}
-}
-
 // Update screen with new nextVisibleNewsBoxes
 function placeNewsBoxes() {
 
 	if (newsAnimationInProgress()) {
-		waitForNewsAnimation(rotateGlobalNews);
+		waitForNewsAnimation(placeNewsBoxes);
 		return;
 	}
 
@@ -331,7 +183,7 @@ function loadNewsData(jsonData) {
 
 	var data = JSON.parse(jsonData);
 
-	if (data.news.length > 0) {
+	if (data.news && data.news.length > 0) {
 		for (var j = 0; j < data.news.length; j++) {
 			found = false;
 			for (var i = 0; i < allNewsBoxes.length; i++) {
@@ -368,49 +220,11 @@ function loadNewsData(jsonData) {
 		}
 	}
 
-	if (data.global_news.length > 0) {
-		for (var j = 0; j < data.global_news.length; j++) {
-			found = false;
-			for (var i = 0; i < allGlobalNewsBoxes.length; i++) {
-				if (allGlobalNewsBoxes[i].id == data.global_news[j].id) {
-					titleElement = allGlobalNewsBoxes[i].box.getElementsByTagName("h3")[0];
-					titleElement.innerHTML = data.global_news[j].title;
-					messageElement = allGlobalNewsBoxes[i].box.getElementsByTagName("p")[1];
-					messageElement.innerHTML = data.global_news[j].content;
-					found = true;
-					break;
-				}
-			}
-			if (!found) {
-				addGlobalNews(data.global_news[j]);
-			}
-		}
-
-		newsToRemove = [];
-		for (var i = 0; i < allGlobalNewsBoxes.length; i++) {
-			found = false;
-			for (var j = 0; j < data.global_news.length; j++) {
-				if (allGlobalNewsBoxes[i].id == data.global_news[j].id) {
-					found = true;
-				}
-			}
-			if (!found) {
-				newsToRemove.push(i);
-			}			
-		}
-		for (var i = 0; i < newsToRemove.length; i++) {
-			globalNewsContainer.removeChild(allGlobalNewsBoxes[newsToRemove[i]].box);
-			allGlobalNewsBoxes.splice(newsToRemove[i], 1);
-		}
-	}
-
 	placeNewsBoxes();
-	rotateGlobalNews();
 
 	if(newsRefreshTimerId == 0) {
 		newsRefreshTimerId = startAnimThread(setInterval(getRemoteNewFeedData, getConfig("newsFeedUpdateDelay", FEED_REFRESH_DEFAULT_INTERVAL)), "Start Feed Refresh Timer");
 		newsMoveTimerId = startAnimThread(setInterval(placeNewsBoxes, getConfig("newsSwapDelay", NEWS_ROTATION_DEFAULT_INTERVAL)), "Start News Move Timer");
-		globalNewsMoveTimerId = startAnimThread(setInterval(rotateGlobalNews, getConfig("globalNewsSwapDelay", GLOBAL_NEWS_ROTATION_DEFAULT_INTERVAL)), "Start Global News Move Timer");
 	}
 }
 
@@ -434,10 +248,8 @@ function getRemoteNewFeedData() {
 	if(newsRefreshTimerId != 0) {
 		stopAnimThread(newsRefreshTimerId, "Stop Feed Refresh Timer");
 		stopAnimThread(newsMoveTimerId, "Stop News Move Timer");
-		stopAnimThread(globalNewsMoveTimerId, "Stop Global News Move Timer");
 		newsRefreshTimerId = 0;
 		newsMoveTimerId = 0;
-		globalNewsMoveTimerId = 0;
 	}
 
     var xmlhttp = new XMLHttpRequest();
@@ -456,7 +268,7 @@ function getRemoteNewFeedData() {
         }
     };
 
-    xmlhttp.open("GET", FEED_URL, true);
+    xmlhttp.open("GET", NEWS_FEED_URL, true);
     xmlhttp.send();
 }
 

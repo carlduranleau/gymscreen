@@ -28,7 +28,7 @@ class CalendarFeeder:
 		events = self.calendarAPI.getService().get_events(self.range_start, self.range_end)
 		
 		for event in events:
-			#print(json.dumps(event.__dict__, indent=4, sort_keys=True, default=str))
+			# print(json.dumps(event.__dict__, indent=4, sort_keys=True, default=str))
 			if event:
 				self._events_data.append(event)
 

@@ -65,9 +65,9 @@ body {
   color: #555555;
 }
 
-.globalnewscontainer {
-  background-color: #ccdfff;
-  width: 1370px;
+.eventscontainer {
+  background-color: #ccffff;
+  width: 1310px;
   height: 252px;
   top: 0px;
   left: 0px;
@@ -80,7 +80,7 @@ body {
   opacity: 0.9;
 }
 
-.globalnewsbox {
+.eventsbox {
   font-family: "Comic Sans MS", cursive, sans-serif;
   font-size: 14px;
   color: #666666;
@@ -91,7 +91,7 @@ body {
   opacity: 0.9;
 }
 
-.globalnewsbox h3 {
+.eventsbox h3 {
   font-family: "Comic Sans MS", cursive, sans-serif;
   font-size: 15px;
   font-weight: bold;

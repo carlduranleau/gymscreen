@@ -1,16 +1,16 @@
 from flask_restful import Resource
 from calendarfeeder import CalendarFeeder
 from newsfeeder import NewsFeeder
-from flask import make_response
+from flask import make_response, request
 
 class DataService(Resource):
 
 	newsfeeder = NewsFeeder()
 	calendarfeeder = CalendarFeeder()
 
-	def get(self, path=None):
+	def get(self):
 		feeder = None
-		if path: #/feed gets news feed while /feed/calendar gets calendar feed
+		if 'calendarfeed' in request.full_path:
 			feeder = self.calendarfeeder
 		else:
 			feeder = self.newsfeeder

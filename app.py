@@ -10,7 +10,10 @@ from httpimageservice import HttpImageService
 app = Flask(__name__)
 api = Api(app)
 
+# Data feeders for News and Calendar
 api.add_resource(DataService, '/feed', '/calendarfeed')
+
+# 
 api.add_resource(FileService, '/files')
 api.add_resource(ConfigService, '/config');
 api.add_resource(HttpService, '/', '/<path:path>')

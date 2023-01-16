@@ -1,5 +1,6 @@
 from filecredential import FileCredential
 import gkeepapi
+import json
 
 class NewsFeeder:
 
@@ -7,7 +8,6 @@ class NewsFeeder:
 
 	def __init__(self):
 		self.credential = FileCredential('token')
-		self._global_news_data = []
 		self._news_data = []
 		self._loading_error_count = 0
 		self.keep = None
@@ -26,30 +26,30 @@ class NewsFeeder:
 			if self.keep:
 				self.keep.sync()
 		except:
-			print('ERROR: Cannot connect to data feed')
+			print('ERROR: Cannot connect to news data feed')
 			raise
 
 	def _reset(self):
-		self._global_news_data = []
 		self._news_data = []
 		self._loading_error_count = 0
 
 	def load(self):
 		self._authenticate()
-		self._reset()
-
-		#gnotes = self.keep.all()
 		gnotes = self.keep.find()
-
+		self._reset()
+		remote_news = []
 		for gnote in gnotes:
+			# print(json.dumps(gnote.__dict__, indent=4, sort_keys=True, default=str))
+			# print(json.dumps(gnote))
 			# This line may generate errors on unknown characters.
 			# Will occur on 'lists', so it ensures we only get notes.
 			validator = '{}: {}'.format(gnote.title, gnote.text)
 			if gnote.text and gnote.title:
-				if gnote.pinned:
-					self._global_news_data.append(gnote)
-				else:
-					self._news_data.append(gnote)
+				remote_news.append(gnote)
+				
+		# News cache is updated at the end to prevent a parsing error
+		# to invalidate the current news cache content.
+		self._news_data = remote_news
 
 	def getErrorcount(self):
 		return self._loading_error_count
@@ -57,34 +57,17 @@ class NewsFeeder:
 	def hasError(self):
 		return self._loading_error_count > 0
 
-	def getGlobalNewsCount(self):
-		return len(self._global_news_data)
-
-	def getCategorizedNewsCount(self):
+	def getNewsCount(self):
 		return len(self._news_data)
 
-	def getTotalNewsCount(self):
-		return self.getGlobalNewsCount() + self.getCategorizedNewsCount()
-
-	def getGlobalNews(self):
-		return self._global_news_data
-
-	def getCategorizedNews(self):
+	def getNews(self):
 		return self._news_data
 
 	def _getColor(self, keep_color):
 		return self.COLORS.get(str(keep_color), '#ffffff')
 
 	def toJSON(self):
-		json_global_news = ''
 		json_news = ''
-
-		for news in self._global_news_data:
-			if json_global_news:
-				json_global_news += ","
-			else:
-				json_global_news = ''
-			json_global_news += '{{"id":"{}","title":"{}","content":"{}","color":"{}"}}'.format(news.id, news.title.replace('\n', '</br>').replace('  ', '&nbsp;&nbsp;'), news.text.replace('\n', '</br>').replace('  ', '&nbsp;&nbsp;'), self._getColor(news.color))
 
 		for news in self._news_data:
 			if json_news:
@@ -93,4 +76,4 @@ class NewsFeeder:
 				json_news = ''
 			json_news += '{{"id":"{}","title":"{}","content":"{}","color":"{}"}}'.format(news.id, news.title.replace('\n', '</br>').replace('  ', '&nbsp;&nbsp;'), news.text.replace('\n', '</br>').replace('  ', '&nbsp;&nbsp;'), self._getColor(news.color))
 
-		return '{"global_news":[' + json_global_news + '],"news":[' + json_news + ']}'
+		return '{"news":[' + json_news + ']}'

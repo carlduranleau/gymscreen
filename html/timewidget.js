@@ -3,7 +3,7 @@ DATE_NAME = ["Janvier", "F&eacute;vrier", "Mars", "Avril", "Mai", "Juin", "Juill
 function refreshDate(widget) {
 	var dateObj = new Date();
 	var currentDate = dateObj.getDate() + " " + DATE_NAME[dateObj.getMonth()] + " " + dateObj.getFullYear();
-	var currentTime = to2Chars(dateObj.getHours()) + ":" + to2Chars(dateObj.getMinutes()) + ":" + to2Chars(dateObj.getSeconds());
+	var currentTime = to2Chars(dateObj.getHours()) + ":" + to2Chars(dateObj.getMinutes())
 	widget.innerHTML = currentDate + "<br>" + currentTime;
 	widget.style.top = window.innerHeight - 80;
 }
@@ -17,6 +17,6 @@ function initTimeWidget() {
 	widget.className = 'timewidget';
 	widget.style.top = window.innerHeight - 80;
 	document.body.appendChild(widget);
-	setInterval(refreshDate, 1000, widget);
+	setInterval(refreshDate, 30000, widget);
 }
 
