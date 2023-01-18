@@ -282,7 +282,7 @@ function formatContent(event) {
 	if (!event) return;
 	var content = event.summary;
 	if (event.description) {
-		content = content + "<br><br>" + event.description.replace(/(?:\r\n|\r|\n)/g, "<br>");
+		content = "<b>" + content + "</b><br><br>" + event.description.replace(/(?:\r\n|\r|\n)/g, "<br>");
 	}
 	if (event.location) {
 		content = content + "<br><br><b>Lieu :</b> " + event.location;
