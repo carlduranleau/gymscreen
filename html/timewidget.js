@@ -17,6 +17,7 @@ function initTimeWidget() {
 	widget.className = 'timewidget';
 	widget.style.top = window.innerHeight - 80;
 	document.body.appendChild(widget);
+	refreshDate(widget);
 	setInterval(refreshDate, 30000, widget);
 }
 
