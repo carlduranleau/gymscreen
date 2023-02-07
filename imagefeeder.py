@@ -9,10 +9,14 @@ class ImageFeeder:
 	# Background update thread parameters
 	ALLOWED_EXTENSIONS = ['png', 'jpg']
 	WAIT_DELAY_IN_SECS = 10
+	SOURCE_DRIVE = '/media/pi/F93B-78A5/cache/'
 	PERSIST_PATH = 'images'
 
 	def __init__(self):
 		self.files = []
+		if os.path.exists(self.SOURCE_DRIVE + self.PERSIST_PATH):
+			self.PERSIST_PATH = self.SOURCE_DRIVE + self.PERSIST_PATH
+		print('Images cache folder: ' + self.PERSIST_PATH)
 		self.download_thread = DownloadThread(self.PERSIST_PATH, self.ALLOWED_EXTENSIONS, self.WAIT_DELAY_IN_SECS)
 		self.download_thread.start()
 		signal.signal(signal.SIGTERM, self._service_shutdown)
@@ -50,6 +54,6 @@ class ImageFeeder:
 				json_output += ","
 			else:
 				json_output = ''
-			json_output += '{{"name":"{}","url":"/{}/{}"}}'.format(file, self.PERSIST_PATH, file)
+			json_output += '{{"name":"{}","url":"/{}/{}"}}'.format(file, 'images', file)
 		return '{"files":[' + json_output + ']}'
 

@@ -10,9 +10,13 @@ from googleauthenticator import GoogleAuthenticator
 class ConfigFeeder:
 
 	CONFIG_FILE_NAME = 'config.properties'
+	SOURCE_DRIVE = '/media/pi/F93B-78A5/cache/'
 	PERSIST_PATH = 'config'
 
 	def __init__(self):
+		if os.path.exists(self.SOURCE_DRIVE + self.PERSIST_PATH):
+			self.PERSIST_PATH = self.SOURCE_DRIVE + self.PERSIST_PATH
+		print('Configuration cache folder: ' + self.PERSIST_PATH)
 		self.driveAPI = GoogleDrive(GoogleAuthenticator())
 		self.textContent=''
 
