@@ -2,11 +2,12 @@ from flask_restful import Resource
 from calendarfeeder import CalendarFeeder
 from newsfeeder import NewsFeeder
 from flask import make_response, request
+from config import Config
 
 class DataService(Resource):
 
-	newsfeeder = NewsFeeder()
-	calendarfeeder = CalendarFeeder()
+	newsfeeder = NewsFeeder(Config.CACHE_PATH, Config.NEWS_FILE)
+	calendarfeeder = CalendarFeeder(Config.CACHE_PATH, Config.CALENDAR_FILE)
 
 	def get(self):
 		feeder = None

@@ -1,10 +1,11 @@
 from flask_restful import Resource
 from configfeeder import ConfigFeeder
 from flask import make_response
+from config import Config
 
 class ConfigService(Resource):
 
-	feeder = ConfigFeeder()
+	feeder = ConfigFeeder(Config.CACHE_PATH, Config.CONFIG_FILE)
 
 	def get(self):
 		self.feeder.load()

@@ -1,7 +1,7 @@
 // Constants
 NEWS_FEED_URL = "http://localhost:5002/feed"		// News feed url
 EVENTS_FEED_URL = "http://localhost:5002/calendarfeed"		// Events feed url
-FILE_URL = "http://localhost:5002/files"	// Images feed url
+FILE_URL = "http://localhost:5002/images"	// Images feed url
 CONFIG_URL = "http://localhost:5002/config"	// Configuration feed url
 MAX_WINDOW_WIDTH = window.innerWidth;		// Browser width
 MAX_WINDOW_HEIGHT = window.innerHeight;		// Browser height

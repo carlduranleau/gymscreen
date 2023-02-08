@@ -1,55 +1,26 @@
-from __future__ import print_function
-import pickle
-import os.path
-from googleapiclient.discovery import build
 import re
 import os
-from googledrive import GoogleDrive
-from googleauthenticator import GoogleAuthenticator
 
 class ConfigFeeder:
 
-	CONFIG_FILE_NAME = 'config.properties'
-	SOURCE_DRIVE = '/media/pi/F93B-78A5/cache/'
-	PERSIST_PATH = 'config'
-
-	def __init__(self):
-		if os.path.exists(self.SOURCE_DRIVE + self.PERSIST_PATH):
-			self.PERSIST_PATH = self.SOURCE_DRIVE + self.PERSIST_PATH
-		print('Configuration cache folder: ' + self.PERSIST_PATH)
-		self.driveAPI = GoogleDrive(GoogleAuthenticator())
+	def __init__(self, cache_path, filename):
 		self.textContent=''
+		self.cache_path = cache_path
+		self.filename = filename
 
-	def _load_last_configuration(self):
-		fullConfigPath = '{}/{}'.format(self.PERSIST_PATH, self.CONFIG_FILE_NAME)
+	def _load_from_disk(self):
+		fullConfigPath = '{}/{}'.format(self.cache_path, self.filename)
+		self.textContent=''
 		if os.path.exists(fullConfigPath):
-			f = open(fullConfigPath, "r")
-			self.textContent = f.read()
-			f.close()
+			with open(fullConfigPath, "r") as f:
+				self.textContent = f.read()
 
 	def load(self):
 		try:
-			# Call the Drive v3 API
-			results = self.driveAPI.getService().files().list(fields="*",q="trashed=False and name='{}'".format(self.CONFIG_FILE_NAME)).execute()
-			drivefiles = results.get('files', [])
-			if drivefiles:
-				self.download(drivefiles[0], self.PERSIST_PATH)
+			self._load_from_disk()
 		except Exception as e:
-			print('Cannot download configuration. Loading last valid configuration.')
 			print(e)
-		self._load_last_configuration()
-
-	def download(self, filename, target):
-		try:
-			print('Downloading {}'.format(filename.get('name')))
-			content = self.driveAPI.getService().files().get_media(fileId=filename.get('id')).execute()
-			with open('{}/{}'.format(target, filename.get('name')), 'wb') as f:
-				f.write(content)
-			return True
-		except Exception as e:
-			print('Unable to download {}'.format(filename.get('name')))
-			print(e)
-		return False
+			self.textContent = ''
 
 	def toText(self):
 		return re.sub(r'(#.*\n)', '', self.textContent)
