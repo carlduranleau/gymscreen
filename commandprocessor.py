@@ -1,3 +1,6 @@
+from environment import Environment
+import os
+
 class CommandProcessor:
 		
 	def execute(self, context, command, args):
@@ -8,11 +11,11 @@ class CommandProcessor:
 			print('with arguments: {}'.format(args))
 		match context.upper():
 			case "UI":
-				pass
+				self.processUICommand(command, args)
 			case "SI":
-				pass
+				self.processSICommand(command, args)
 			case "SYS":
-				pass
+				self.processSYSCommand(command, args)
 	
 	def processUICommand(self, command, args):
 		match command.upper():
@@ -24,14 +27,21 @@ class CommandProcessor:
 	def processSICommand(self, command, args):
 		match command.upper():
 			case "RESTART":
-				pass
+				Environment.updaterThread.shutdown()
 	
 	def processSYSCommand(self, command, args):
 		match command.upper():
 			case "SHUTDOWN":
-				pass
+				os.system('shutdown -h now')
 			case "RESTART":
-				pass
+				os.system('shutdown -r now')
 			case "MAINTENANCE":
-				pass
-	
+				if len(args) > 0:
+					match args[0].lower():
+						case 'on':
+							Environment.maintenanceMode = args[0]
+						case 'off':
+							Environment.maintenanceMode = args[0]
+						case 'default':
+							Environment.maintenanceMode = None
+		

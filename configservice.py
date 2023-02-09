@@ -9,7 +9,7 @@ class ConfigService(Resource):
 
 	def get(self):
 		self.feeder.load()
-		response = make_response(self.feeder.toText())
+		response = make_response(self.feeder.toJSON())
 		response.headers['content-type'] = 'text/plain'
 		response.headers['Access-Control-Allow-Origin'] = '*'
 		return response

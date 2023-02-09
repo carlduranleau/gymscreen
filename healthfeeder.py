@@ -12,10 +12,13 @@ class HealthFeeder:
 		
 	def load(self, command=None):
 		self.healthdata = '{"status":"OK"}'
-		if command:
-			self.processCommand(command)
-		else:
-			self.getHealth()
+		try:
+			if command:
+				self.processCommand(command)
+			else:
+				self.getHealth()
+		except Exception as e:
+			self.healthdata = '{{"status":"ERROR","error":"{}"}}'.format(e)
 	
 	def processCommand(self, request):
 		if request is None:
