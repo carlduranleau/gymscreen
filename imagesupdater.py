@@ -2,6 +2,7 @@ import os
 from updateprocess import UpdateProcess
 from googledrive import GoogleDrive
 from googleauthenticator import GoogleAuthenticator
+from httpimageservice import HttpImageService
 
 class ImagesUpdater(UpdateProcess):
 	
@@ -11,7 +12,12 @@ class ImagesUpdater(UpdateProcess):
 		self.driveAPI = GoogleDrive(GoogleAuthenticator())
 	
 	def update(self):
+		self._validateStorage()
 		self._updateFiles()
+	
+	def _validateStorage(self):
+		if not os.path.exists(self.cache_path):
+			os.mkdir(self.cache_path)
 	
 	# Update local cache with remote files
 	def _updateFiles(self):
@@ -92,3 +98,8 @@ class ImagesUpdater(UpdateProcess):
 				if self._isValidFile(filename):
 					files.append(filename)
 		return files
+	
+	def getHealthData(self):
+		HttpImageService.feeder.load()
+		return '{{"allowedextensions":{},"lastdata":{}}}'.format(self.file_extensions, HttpImageService.feeder.toJSON()).replace("'",'"')
+	

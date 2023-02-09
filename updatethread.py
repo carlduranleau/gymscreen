@@ -34,6 +34,9 @@ class UpdateThread(threading.Thread):
 		print('Waiting for application thread to stop...')
 		self.running = False
 	
+	def getProcesses(self):
+		return self.processes
+	
 	def _waitForProcess(self):
 		if self.processrunning is None:
 			return

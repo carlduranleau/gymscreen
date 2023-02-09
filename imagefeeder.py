@@ -2,12 +2,6 @@ import os
 
 class ImageFeeder:
 
-	# Background update thread parameters
-	ALLOWED_EXTENSIONS = ['png', 'jpg']
-	WAIT_DELAY_IN_SECS = 10
-	SOURCE_DRIVE = '/media/pi/F93B-78A5/cache/'
-	PERSIST_PATH = 'images'
-
 	def __init__(self, cache_path, image_dir, file_extensions):
 		self.files = []
 		self.cache_path = cache_path + image_dir
@@ -46,4 +40,3 @@ class ImageFeeder:
 				json_output = ''
 			json_output += '{{"name":"{}","url":"/{}/{}"}}'.format(file, self.image_dir, file)
 		return '{"files":[' + json_output + ']}'
-

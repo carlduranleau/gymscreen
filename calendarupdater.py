@@ -4,9 +4,11 @@ from dateutil.relativedelta import relativedelta
 from googlecalendar import GoogleCalendar
 from googleauthenticator import GoogleAuthenticator
 from updateprocess import UpdateProcess
+from dataservice import DataService
 import os
 import pickle
 import json
+import types
 
 class CalendarUpdater(UpdateProcess):
 	
@@ -15,11 +17,13 @@ class CalendarUpdater(UpdateProcess):
 		self.filename = filename
 		self.timerange = timerange
 		self.calendarAPI = GoogleCalendar(GoogleAuthenticator())
+		self.range_start = None
+		self.range_end = None
 		
 	def update(self):
-		range_start = datetime.now()
-		range_end = datetime.now() + relativedelta(months=self.timerange)
-		events = self.calendarAPI.getService().get_events(range_start, range_end)
+		self.range_start = datetime.now()
+		self.range_end = datetime.now() + relativedelta(months=self.timerange)
+		events = self.calendarAPI.getService().get_events(self.range_start, self.range_end)
 		remote_events = []
 		if events:
 			for event in events:
@@ -32,3 +36,10 @@ class CalendarUpdater(UpdateProcess):
 		if os.path.exists(self.cache_path):
 			with open('{}/{}'.format(self.cache_path, self.filename), 'wb') as f:
 				pickle.dump(data, f)
+		
+	def getHealthData(self):
+		DataService.calendarfeeder.load()
+		return '{{"daterange":{{"start":"{}","end":"{}","range":{}}},"lastdata":{}}}'.format(self.range_start, self.range_end, self.timerange, DataService.calendarfeeder.toJSON())
+	
+	def getLastDateRange(self):
+		return [self.range_start, self.range_end, self.timerange]

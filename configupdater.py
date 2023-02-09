@@ -1,6 +1,7 @@
 import re
 import os
 from updateprocess import UpdateProcess
+from configservice import ConfigService
 from googledrive import GoogleDrive
 from googleauthenticator import GoogleAuthenticator
 
@@ -22,3 +23,8 @@ class ConfigUpdater(UpdateProcess):
 		content = self.driveAPI.getService().files().get_media(fileId=filename.get('id')).execute()
 		with open('{}/{}'.format(target, filename.get('name')), 'wb') as f:
 			f.write(content)
+	
+	def getHealthData(self):
+		ConfigService.feeder.load()
+		return '{{"lastdata":"{}"}}'.format(ConfigService.feeder.toText().replace("\n","\\n"))
+

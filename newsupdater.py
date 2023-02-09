@@ -1,5 +1,6 @@
 from updateprocess import UpdateProcess
 from filecredential import FileCredential
+from dataservice import DataService
 import gkeepapi
 import os
 import pickle
@@ -45,7 +46,11 @@ class NewsUpdater(UpdateProcess):
 			self.keep = None
 			print('ERROR: Cannot connect to news data feed')
 			raise
-	
+
+	def getHealthData(self):
+		DataService.newsfeeder.load()
+		return '{{"lastdata":{}}}'.format(DataService.newsfeeder.toJSON())
+
 	def _persist_to_disk(self, data):
 		if os.path.exists(self.cache_path):
 			with open('{}/{}'.format(self.cache_path, self.filename), 'wb') as f:
