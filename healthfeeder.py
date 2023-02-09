@@ -1,5 +1,6 @@
 from environment import Environment
 from config import Config
+from commandprocessor import CommandProcessor
 import json
 import types
 
@@ -7,15 +8,26 @@ class HealthFeeder:
 	
 	def __init__(self):
 		self.healthdata = None
+		self.commandprocessor = CommandProcessor()
 		
 	def load(self, command=None):
+		self.healthdata = '{"status":"OK"}'
 		if command:
 			self.processCommand(command)
 		else:
 			self.getHealth()
 	
-	def processCommand(self, command):
-		pass
+	def processCommand(self, request):
+		if request is None:
+			return
+		args = request.split('/')
+		if len(args) < 2:
+			return
+		context = args[0]
+		command = args[1]
+		args.pop(0)
+		args.pop(0)
+		self.commandprocessor.execute(context, command, args)
 	
 	def getHealth(self):
 		self.healthdata = '{{{},{}}}'.format(self._getUpdatersHealth(), self._getConfig())

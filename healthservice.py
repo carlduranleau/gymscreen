@@ -8,8 +8,8 @@ class HealthService(Resource):
 
 	feeder = HealthFeeder()
 	
-	def get(self, command=None):
-		self.feeder.load(command)
+	def get(self, path=None):
+		self.feeder.load(path)
 		response = make_response(self.feeder.toJSON())
 		response.headers['content-type'] = 'application/json'
 		response.headers['Access-Control-Allow-Origin'] = '*'
