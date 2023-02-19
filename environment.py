@@ -1,5 +1,7 @@
+from datetime import datetime
+
 class Environment:
-	updaterThread = None
+	starttime = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
 	maintenanceMode = None
 	logger = None
 	updatethread = None

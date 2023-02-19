@@ -27,7 +27,7 @@ class CommandProcessor:
 	def processSICommand(self, command, args):
 		match command.upper():
 			case "RESTART":
-				Environment.updaterThread.shutdown()
+				Environment.updatethread.shutdown()
 	
 	def processSYSCommand(self, command, args):
 		match command.upper():

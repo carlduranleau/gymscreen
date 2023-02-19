@@ -33,19 +33,19 @@ class HealthFeeder:
 		self.commandprocessor.execute(context, command, args)
 	
 	def getHealth(self):
-		self.healthdata = '{{{},{}}}'.format(self._getUpdatersHealth(), self._getConfig())
+		self.healthdata = '{{{},{},{}}}'.format(self._getEnvironmentHealth(), self._getUpdatersHealth(), self._getConfig())
 
 	def _getUpdatersHealth(self):
-		if not Environment.updaterThread:
+		if not Environment.updatethread:
 			return ''
-		updaters = Environment.updaterThread.getProcesses()
-		updatersData = '"updaterthread":{{"running":"{}","processcount":{}'.format(Environment.updaterThread.isRunning(),len(updaters))
+		updaters = Environment.updatethread.getProcesses()
+		updatersData = '"updaterthread":{{"running":"{}","processcount":{}'.format(Environment.updatethread.isRunning(),len(updaters))
 		
 		if updaters:
 			updatersData = updatersData + ',"processes":['
 			first = True
 			for updater in updaters:
-				updaterData = '{{"name":"{}","haserror":"{}","lasterror":"{}","lastexecution":"{}","customdata":{}}}'.format(updater.__class__.__name__,updater.hasError(),updater.getError(),updater.getLastRunTime().strftime("%m/%d/%Y, %H:%M:%S"),updater.getHealthData())
+				updaterData = updater.getHealth()
 				if not first:
 					updaterData = ',' + updaterData
 				first = False
@@ -53,6 +53,12 @@ class HealthFeeder:
 			updatersData = updatersData + ']'
 		updatersData = updatersData + '}'
 		return updatersData
+	
+	def _getEnvironmentHealth(self):
+		return '"environment":{{"starttime":"{}"}}'.format(Environment.starttime)
+	
+	def _getLoggerHealth(self):
+		pass
 	
 	def _getConfig(self):
 		configData = '"config":{'
