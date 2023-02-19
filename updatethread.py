@@ -1,8 +1,7 @@
 from updateprocess import UpdateProcess
+from environment import Environment
 import time
 import threading
-import signal
-import os
 
 class UpdateThread(threading.Thread):
 	
@@ -14,14 +13,14 @@ class UpdateThread(threading.Thread):
 		self.processrunning = None
 	
 	def run(self):
-		print('Download thread started')
+		Environment.logger.log('Download thread started')
 		self.running = True
 		while(self.running):
 			self._runProcesses()
 			self._sleep_thread(self.update_delay)
 		self._waitForProcess()
-		print('Download thread stopped')
-		os._exit(0)
+		Environment.logger.log('Download thread stopped')
+		Environment.logger.update()
 	
 	def isRunning(self):
 		return self.running
@@ -60,12 +59,13 @@ class UpdateThread(threading.Thread):
 						self.processrunning = None
 						return
 					if not process.isRunning():
-						print('Running {}...'.format(process.__class__.__name__))
+						Environment.logger.log('Running {}...'.format(process.__class__.__name__))
 						process.run()
+						#Environment.logger.log('{} stopped'.format(process.__class__.__name__))
 					else:
-						print('{} is already running.'.format(process.__class__.__name__))
+						Environment.logger.log('{} is already running.'.format(process.__class__.__name__))
 				except Exception as e:
-					print('ERROR: Process {} terminated with an error: {}'.format(process.__class__.__name__, process.getError()))
+					Environment.logger.error(e, "UpdateThread")
 			else:
-				print('WARNING: {} is not an UpdateProcess instance.'.format(process.__class__.__name__))
+				Environment.logger.log('WARNING: {} is not an UpdateProcess instance.'.format(process.__class__.__name__))
 		self.processrunning = None

@@ -1,7 +1,9 @@
+from environment import Environment
 from datetime import datetime
 
 class UpdateProcess:
 	lastrun = None
+	lastexecutiontime = None
 	running = False
 	error = None
 	def run(self):
@@ -12,9 +14,10 @@ class UpdateProcess:
 			self.setRunning()
 			self.update()
 			self.setStopped()
+			self.lastexecutiontime = (datetime.now() - self.lastrun).total_seconds() * 1000
 		except Exception as e:
 			self.setError(e)
-			print(e)
+			Environment.logger.error(e, self.__class__.__name__)
 	def update(self):
 		pass
 	def getHealthData(self):
@@ -35,3 +38,5 @@ class UpdateProcess:
 		return self.error
 	def getLastRunTime(self):
 		return self.lastrun
+	def getLastExecutionTime(self):
+		return self.lastexecutiontime

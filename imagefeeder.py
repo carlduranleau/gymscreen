@@ -1,3 +1,4 @@
+from environment import Environment
 import os
 
 class ImageFeeder:
@@ -12,7 +13,7 @@ class ImageFeeder:
 		try:
 			self.files = self._getFiles()
 		except Exception as e:
-			print(e)
+			Environment.logger.error(e, "ImageFeeder")
 			self.files = []
 
 	def _getFiles(self):

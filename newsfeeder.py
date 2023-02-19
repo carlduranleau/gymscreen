@@ -1,3 +1,4 @@
+from environment import Environment
 import os
 import pickle
 
@@ -23,7 +24,7 @@ class NewsFeeder:
 		try:
 			self._load_from_disk()
 		except Exception as e:
-			print(e)
+			Environment.logger.error(e, "NewsFeeder")
 			self._news_data = []
 
 	def toJSON(self):

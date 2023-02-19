@@ -3,6 +3,7 @@ from updateprocess import UpdateProcess
 from googledrive import GoogleDrive
 from googleauthenticator import GoogleAuthenticator
 from httpimageservice import HttpImageService
+from environment import Environment
 
 class ImagesUpdater(UpdateProcess):
 	
@@ -49,25 +50,18 @@ class ImagesUpdater(UpdateProcess):
 				else:
 					error = error + 1
 		
-		if (removed + added + error) == 0:
-			print('No update needed.')
-		else:
-			if error > 0:
-				print('{} update error(s)'.format(error))
-			if added > 0:
-				print('{} element(s) added'.format(added))
-			if removed > 0:
-				print('{} element(s) removed'.format(removed))
+		if error > 0 or added > 0 or removed > 0:
+			Environment.logger.log('ImageUpdater: {} error(s), {} adds, {} removals'.format(error, added, removed))
 	
 	def _download(self, filename, file_id, target):
 		try:
-			print('Downloading {}'.format(filename))
+			Environment.logger.log('Downloading {}'.format(filename))
 			content = self.driveAPI.getService().files().get_media(fileId=file_id).execute()
 			with open('{}/{}'.format(target, filename), 'wb') as f:
 				f.write(content)
 			return True
-		except:
-			print('Unable to download {}'.format(filename))
+		except Exception as e:
+			Environment.logger.error(e, 'ImageUpdater ({})'.format(filename))
 		return False
 	
 	# Validate file extension

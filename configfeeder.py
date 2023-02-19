@@ -20,7 +20,7 @@ class ConfigFeeder:
 		try:
 			self._load_from_disk()
 		except Exception as e:
-			print(e)
+			Environment.logger.error(e, "ConfigFeeder")
 			self.textContent = ''
 
 	def toText(self):

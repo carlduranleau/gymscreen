@@ -1,3 +1,4 @@
+from environment import Environment
 from gcsa.google_calendar import GoogleCalendar as GoogleCalendarAPI
 
 class GoogleCalendar:
@@ -9,6 +10,6 @@ class GoogleCalendar:
 		try:
 			creds = self.authenticator.authenticate();
 			return GoogleCalendarAPI(credentials=creds)
-		except:
-			print('ERROR: Cannot connect to file feed')
+		except Exception as e:
+			Environment.logger.error(e, "GoogleCalendar")
 			raise

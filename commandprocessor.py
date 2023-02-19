@@ -6,9 +6,9 @@ class CommandProcessor:
 	def execute(self, context, command, args):
 		if context is None or command is None:
 			return
-		print('Executing {}.{}'.format(context, command))
+		Environment.logger.log('Executing {}.{}'.format(context, command))
 		if len(args) > 0:
-			print('with arguments: {}'.format(args))
+			Environment.logger.log('with arguments: {}'.format(args))
 		match context.upper():
 			case "UI":
 				self.processUICommand(command, args)

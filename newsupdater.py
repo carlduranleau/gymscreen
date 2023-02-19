@@ -1,6 +1,7 @@
 from updateprocess import UpdateProcess
 from filecredential import FileCredential
 from dataservice import DataService
+from environment import Environment
 import gkeepapi
 import os
 import pickle
@@ -41,10 +42,10 @@ class NewsUpdater(UpdateProcess):
 				self._auth_token = self.keep.getMasterToken()
 			if self.keep:
 				self.keep.sync()
-		except:
+		except Exception as e:
 			self._auth_token = None
 			self.keep = None
-			print('ERROR: Cannot connect to news data feed')
+			Environment.logger.error(e, "NewsUpdater")
 			raise
 
 	def getHealthData(self):

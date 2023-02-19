@@ -13,8 +13,25 @@ from configupdater import ConfigUpdater
 from imagesupdater import ImagesUpdater
 from newsupdater import NewsUpdater
 from environment import Environment
+from logger import Logger
 import signal
 import os
+
+def shutdown(signum=None, frame=None):
+	threadshutdown = []
+	if Environment.logger is not None:
+		threadshutdown.append(Environment.logger)
+		Environment.logger.shutdown(signum, frame)
+	if Environment.updatethread is not None:
+		threadshutdown.append(Environment.updatethread)
+		Environment.updatethread.shutdown(signum, frame)
+	print("Shutting down...")
+	while len(threadshutdown) > 0:
+		for t in threadshutdown:
+			if not t.is_alive():
+				threadshutdown.remove(t)
+	print("Application stopped.")
+	os._exit(0)
 
 # Validate external drive for data caching. If external storage isn't available,
 # a local storage path will be defined to prevent the system from working on a
@@ -49,17 +66,22 @@ api.add_resource(HttpService, '/', '/<path:path>')
 # will then load the local credential files to use the available session.
 GoogleAuthenticator().authenticate()
 
+# Logger process
+Environment.logger = Logger(Config.CACHE_PATH, 'app.log', 10)
+
 # Background updater thread
-updaterThread = UpdateThread([
+Environment.updatethread = UpdateThread([
 	CalendarUpdater(Config.CACHE_PATH, Config.CALENDAR_FILE, Config.CALENDAR_MONTH_RANGE),
 	ConfigUpdater(Config.CACHE_PATH, Config.CONFIG_FILE),
 	ImagesUpdater(Config.CACHE_PATH+Config.IMAGES_DIR, Config.IMAGE_EXTENSIONS),
 	NewsUpdater(Config.CACHE_PATH, Config.NEWS_FILE)
 ], 10)
-updaterThread.start()
-signal.signal(signal.SIGTERM, updaterThread.shutdown)
-signal.signal(signal.SIGINT, updaterThread.shutdown)
-Environment.updaterThread = updaterThread
+Environment.updatethread.start()
+Environment.logger.start()
+signal.signal(signal.SIGTERM, shutdown)
+signal.signal(signal.SIGINT, shutdown)
+
+Environment.logger.log('Application started.')
 
 if __name__ == '__main__':
      app.run(port=Config.SERVER_PORT)

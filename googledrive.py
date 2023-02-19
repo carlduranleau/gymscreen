@@ -1,3 +1,4 @@
+from environment import Environment
 from googleapiclient.discovery import build
 
 class GoogleDrive:
@@ -10,5 +11,5 @@ class GoogleDrive:
 			creds = self.authenticator.authenticate();
 			return build('drive', 'v3', credentials=creds)
 		except:
-			print('ERROR: Cannot connect to file feed')
+			Environment.logger.error(e, "GoogleDrive")
 			raise

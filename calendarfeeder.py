@@ -1,3 +1,4 @@
+from environment import Environment
 from gcsa.event  import Event
 import json
 import os
@@ -21,7 +22,7 @@ class CalendarFeeder:
 		try:
 			self._load_from_disk()
 		except Exception as e:
-			print(e)
+			Environment.logger.error(e, "CalendarFeeder")
 			self._events_data = []
 
 	def toJSON(self):
