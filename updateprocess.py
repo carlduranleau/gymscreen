@@ -21,7 +21,7 @@ class UpdateProcess:
 	def update(self):
 		pass
 	def getHealth(self):
-		return '{{"name":"{}","haserror":"{}","lasterror":"{}","lastexecution":"{}","lastexecutiontime":{}","customdata":{}}}'.format(self.__class__.__name__,self.hasError(),self.getError(),self.getLastRunTime().strftime("%m/%d/%Y, %H:%M:%S"),self.getLastExecutionTime(),self.getHealthData())
+		return '{{"name":"{}","haserror":"{}","lasterror":"{}","lastexecution":"{}","lastexecutiontime":"{}","customdata":{}}}'.format(self.__class__.__name__,self.hasError(),self.getError(),self.getLastRunTime().strftime("%m/%d/%Y, %H:%M:%S"),self.getLastExecutionTime(),self.getHealthData())
 	def getHealthData(self):
 		return '{}'
 	def isRunning(self):

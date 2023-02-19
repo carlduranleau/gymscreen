@@ -49,8 +49,7 @@ class NewsUpdater(UpdateProcess):
 			raise
 
 	def getHealthData(self):
-		DataService.newsfeeder.load()
-		return '{{"lastdata":{}}}'.format(DataService.newsfeeder.toJSON())
+		return '{{"url":"{}"}}'.format('/feed')
 
 	def _persist_to_disk(self, data):
 		if os.path.exists(self.cache_path):

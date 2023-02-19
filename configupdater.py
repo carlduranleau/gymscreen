@@ -25,6 +25,5 @@ class ConfigUpdater(UpdateProcess):
 			f.write(content)
 	
 	def getHealthData(self):
-		ConfigService.feeder.load()
-		return '{{"lastdata":"{}"}}'.format(ConfigService.feeder.toText().replace("\n","\\n"))
+		return '{{"url":"{}"}}'.format('/config')
 

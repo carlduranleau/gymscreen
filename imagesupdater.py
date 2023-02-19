@@ -94,6 +94,5 @@ class ImagesUpdater(UpdateProcess):
 		return files
 	
 	def getHealthData(self):
-		HttpImageService.feeder.load()
-		return '{{"allowedextensions":{},"lastdata":{}}}'.format(self.file_extensions, HttpImageService.feeder.toJSON()).replace("'",'"')
+		return '{{"url":"{}"}}'.format('/images')
 	

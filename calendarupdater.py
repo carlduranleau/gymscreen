@@ -38,8 +38,7 @@ class CalendarUpdater(UpdateProcess):
 				pickle.dump(data, f)
 		
 	def getHealthData(self):
-		DataService.calendarfeeder.load()
-		return '{{"daterange":{{"start":"{}","end":"{}","range":{}}},"lastdata":{}}}'.format(self.range_start, self.range_end, self.timerange, DataService.calendarfeeder.toJSON())
+		return '{{"url":"{}"}}'.format('/calendarfeed')
 	
 	def getLastDateRange(self):
 		return [self.range_start, self.range_end, self.timerange]

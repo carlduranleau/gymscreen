@@ -8,20 +8,81 @@ MAX_WINDOW_WIDTH = window.innerWidth;		// Browser width
 MAX_WINDOW_HEIGHT = window.innerHeight;		// Browser height
 BOX_SPACING = 20;							// General element spacing
 CONSOLE_UPDATE_DELAY = 2000					// Console refresh delay
+DEBUG = true;
+
+var panels;
+var healthdata;
 
 function initConsole() {
-	createImageContainer();
+	refreshData();
+	panels = createConsoleContainer();
 }
 
-function createImageContainer () {
-	consoleContainer = document.createElement("div");
-	consoleContainer.setAttribute("class", "consolecontainer");
-	consoleContainer.style.top = BOX_SPACING + "px";
-	consoleContainer.style.left = BOX_SPACING + "px";
-	consoleContainer.style.width = ((MAX_WINDOW_WIDTH - (2 * BOX_SPACING)) + "px";
-	consoleContainer.style.height = ((MAX_WINDOW_HEIGHT - (2 * BOX_SPACING)) + "px";
+function createConsoleContainer() {
+	consoleContainer = document.createElement('div');
+	consoleContainer.className = 'consolecontainer';
+	consoleTitle = document.createElement('div');
+	consoleTitle.className = 'consoletitle';
+	consoleTitle.innerHTML = 'Gymnamic console'
+	panelsContainer = document.createElement('div');
+	panelsContainer.className = 'consolepanelcontainer';
+	consoleContainer.appendChild(consoleTitle);
+	consoleContainer.appendChild(panelsContainer);
 	document.body.appendChild(consoleContainer);
-	return consoleContainer;
+	return panelsContainer;
+}
+
+function createPanel(title) {
+	panelContainer = document.createElement('div');
+	panelContainer.className = 'consolepanel';
+	panelContainer.style.top = '0px';
+	panelContainer.style.left = '0px';
+	panelContainer.style.width = '50%';
+	panelContainer.style.height = '50%';
+	panelTitle = document.createElement('div');
+	panelTitle.className = 'paneltitle';
+	panelTitle.innerHTML = title;
+	panelContent = document.createElement('div');
+	panelContent.className = 'panelcontent';
+	panelContainer.appendChild(panelTitle);
+	panelContainer.appendChild(panelContent);
+	panels.appendChild(panelContainer);
+	return panelContent;
+}
+
+function createUpdaterPanel(title) {
+	var panel = createPanel(title);
+	var updaterData;
+	var content = '<i>No data available</i>';
+	if (healthdata) {
+		var processes = healthdata.updaterthread.processes;
+		var count = processes.length;
+		for (var i = 0; i < count; i++) {
+			console.log(processes[i].name);
+			if (processes[i].name == title) {
+				updaterData = processes[i];
+				break;
+			}
+		}
+	}
+	if (updaterData) {
+		var content = '<ul>';
+		for (var f in updaterData) {
+			if (f == 'customdata') {
+				content = content + '<li>' + f + ': </li>';
+				var customData = updaterData[f];
+				content = content + '<ul>';
+				for (var c in customData) {
+					content = content + '<li>' + c + ': ' + customData[c] + '</li>';
+				}
+				content = content + '</ul>';
+			} else {
+				content = content + '<li>' + f + ': ' + updaterData[f] + '</li>';
+			}
+		}
+		content = content + '</ul>';
+	}
+	panel.innerHTML = content;
 }
 
 function clearThreads() {
@@ -73,82 +134,29 @@ function isConfigurationExpired() {
 	return (!configurationMap.has("expiration")) || (configurationMap.get("expiration") < (new Date()).getTime());
 }
 
-function refreshConfig() {
-	debugLog ("refreshConfig");
-	if (CONFIG_REFRESH_IN_PROGRESS) {
-		return;
-	}
-	CONFIG_REFRESH_IN_PROGRESS = true;
-	debugLog ("Refreshing config");
+function refreshData() {
+	debugLog ("refreshData");
 	var xmlhttp = new XMLHttpRequest();
 
 	xmlhttp.onreadystatechange = function() {
-        if (xmlhttp.readyState == XMLHttpRequest.DONE) {
-           if (xmlhttp.status == 200) {
-           		configurationMap.clear();
-           		var properties = xmlhttp.responseText.split("\n");
-			properties.forEach(function(entry) {
-				if (entry.includes("=")) {
-					property = entry.split("=");
-					key = property[0];
-					value = property[1];
-					configurationMap.set(key.trim(), value.trim());
-				}
-			});
-			if (configurationMap.size > 0) {
-				configurationMap.set("expiration", (new Date()).getTime() + CONFIG_UPDATE_DELAY);
+		if (xmlhttp.readyState == XMLHttpRequest.DONE) {
+			if (xmlhttp.status == 200) {
+				healthdata = JSON.parse(xmlhttp.responseText);
+				updatePanels();
+			} else if (xmlhttp.status == 400) {
+				debugLog('There was an error 400');
+			} else {
+				debugLog('something else other than 200 was returned');
 			}
-			handleMaintenanceMode();
-           }
-           else if (xmlhttp.status == 400) {
-		debugLog('There was an error 400');
-           }
-           else {
-		debugLog('something else other than 200 was returned');
-           }
-           CONFIG_REFRESH_IN_PROGRESS = false;
-        }
-    };
+		}
+	};
 
-    xmlhttp.open("GET", CONFIG_URL, true);
+    xmlhttp.open("GET", HEALTH_URL, true);
     xmlhttp.send();
 }
 
-function handleMaintenanceMode() {
-	if (configurationMap.has("maintenanceMode")) {
-		var newMaintenanceMode = configurationMap.get("maintenanceMode") && (configurationMap.get("maintenanceMode") == "on" || configurationMap.get("maintenanceMode") == "true");
-		if (newMaintenanceMode) {
-			setTimeout(refreshConfig, 10000);
-		}
-		if (newMaintenanceMode != maintenanceMode) {
-			maintenanceMode = newMaintenanceMode;
-			if (maintenanceMode) {
-				debugLog ("Maintenance mode has been activated");
-				clearThreads();
-				var screenMask = document.createElement("div");
-				screenMask.setAttribute("class", "maintenance");
-				document.body.appendChild(screenMask);
-			} else {
-				location.reload();
-			}
-		}
-	}
-}
-
-function getConfig(param, defaultValue) {
-
-	if (!configurationMap.has("expiration") || !configurationMap.has(param)) {
-		refreshConfig();
-		debugLog ("Getting default config for " + param + ": " + defaultValue);
-		return defaultValue;
-	}
-
-	if (isConfigurationExpired()) {
-		refreshConfig();
-	}
-
-	debugLog ("Getting config for " + param + ": " + configurationMap.get(param));
-	return configurationMap.get(param);
+function updatePanels() {
+	createUpdaterPanel('CalendarUpdater');
 }
 
 function sleep(milliseconds) {
