@@ -10,35 +10,113 @@ BOX_SPACING = 20;							// General element spacing
 CONSOLE_UPDATE_DELAY = 2000					// Console refresh delay
 DEBUG = true;
 
-var panels;
+// Shared Console static class.
+var Console = {};
+Console.workspace = {};
+// Trigger a data update. Listeners will be notified through the onData method.
+Console.triggerUpdate = () => {
+	try {
+		refreshData();
+	} catch (e) {
+		console.log("Console.triggerUpdate: " + e);
+	}
+};
+// Create a new UI widget with title and content panel.
+Console.createWidget = (title, top, left, width, height) => {
+	try {
+		return createWidget(title, top, left, width, height);
+	} catch (e) {
+		console.log("Console.createWidget: " + e);
+	}
+	return;
+};
+// Create a new empty UI widget.
+Console.createRawWidget = (top, left, width, height) => {
+	try {
+		return createRawWidget(top, left, width, height);
+	} catch (e) {
+		console.log("Console.createRawWidget: " + e);
+	}
+	return;
+};
+// Add a widget to the console workspace.
+Console.addWidget = (widget) => {
+	try {
+		var foundwidget = widgets.filter(w => w.id === widget.id);
+		if (foundwidget) {
+			Console.workspace.appendChild(widget.rootPanel);
+		} else {
+			console.log("Widget with id '" + widget.id + "' not found. Only widgets created using Console.createWidget can be added to workspace.");
+		}
+	} catch(e) {
+		console.log("Console.addWidget: " + e);
+	}
+};
+// Remove a widget from the console workspace. Deleted widgets cannot be added through Console.addWidget.
+Console.removeWidget = (widget) => {
+	try {
+		Console.workspace.removeChild(widget.rootPanel);
+		widgets = widgets.filter(w => w.id !== widget.id);
+	} catch(e) {
+		console.log("Console.removeWidget: " + e);
+	}
+};
+// Add a new data update listener. Every listener must declare an onData method.
+Console.register = (listener) => {
+	try {
+		register(listener);
+	} catch(e) {
+		console.log("Console.register: " + e);
+	}
+};
+
 var healthdata;
+var listeners = [];		// Data listeners registered through the "register" method. They must declare an "onData" method to be called on new data events.
+var widgets = [];		// Registered new UI widget through the "createWidget" method.
 
 function initConsole() {
+	Console.workspace = document.getElementsByClassName('consolepanelcontainer')[0];
 	refreshData();
-	panels = createConsoleContainer();
+	setInterval(refreshData, CONSOLE_UPDATE_DELAY);
 }
 
-function createConsoleContainer() {
-	consoleContainer = document.createElement('div');
-	consoleContainer.className = 'consolecontainer';
-	consoleTitle = document.createElement('div');
-	consoleTitle.className = 'consoletitle';
-	consoleTitle.innerHTML = 'Gymnamic console'
-	panelsContainer = document.createElement('div');
-	panelsContainer.className = 'consolepanelcontainer';
-	consoleContainer.appendChild(consoleTitle);
-	consoleContainer.appendChild(panelsContainer);
-	document.body.appendChild(consoleContainer);
-	return panelsContainer;
+function register(listener) {
+	if(listeners.includes(listener)) return;
+	listeners.push(listener);
 }
 
-function createPanel(title) {
+function invokeListeners() {
+	if (listeners.length == 0) return;
+	try {
+		listeners.forEach(function(listener) {
+			listener.onData(healthdata);
+		});
+	} catch(e) {
+		console.log(e);
+	}
+}
+
+function createRawWidget(top, left, width, height) {
 	panelContainer = document.createElement('div');
 	panelContainer.className = 'consolepanel';
-	panelContainer.style.top = '0px';
-	panelContainer.style.left = '0px';
-	panelContainer.style.width = '50%';
-	panelContainer.style.height = '50%';
+	panelContainer.style.top = top;
+	panelContainer.style.left = left;
+	panelContainer.style.width = width;
+	panelContainer.style.height = height;
+	var Widget = {};
+	Widget.id = Date.now();
+	Widget.rootPanel = panelContainer;
+	widgets.push(Widget);
+	return Widget;
+}
+
+function createWidget(title, top, left, width, height) {
+	panelContainer = document.createElement('div');
+	panelContainer.className = 'consolepanel';
+	panelContainer.style.top = top;
+	panelContainer.style.left = left;
+	panelContainer.style.width = width;
+	panelContainer.style.height = height;
 	panelTitle = document.createElement('div');
 	panelTitle.className = 'paneltitle';
 	panelTitle.innerHTML = title;
@@ -46,92 +124,13 @@ function createPanel(title) {
 	panelContent.className = 'panelcontent';
 	panelContainer.appendChild(panelTitle);
 	panelContainer.appendChild(panelContent);
-	panels.appendChild(panelContainer);
-	return panelContent;
-}
-
-function createUpdaterPanel(title) {
-	var panel = createPanel(title);
-	var updaterData;
-	var content = '<i>No data available</i>';
-	if (healthdata) {
-		var processes = healthdata.updaterthread.processes;
-		var count = processes.length;
-		for (var i = 0; i < count; i++) {
-			console.log(processes[i].name);
-			if (processes[i].name == title) {
-				updaterData = processes[i];
-				break;
-			}
-		}
-	}
-	if (updaterData) {
-		var content = '<ul>';
-		for (var f in updaterData) {
-			if (f == 'customdata') {
-				content = content + '<li>' + f + ': </li>';
-				var customData = updaterData[f];
-				content = content + '<ul>';
-				for (var c in customData) {
-					content = content + '<li>' + c + ': ' + customData[c] + '</li>';
-				}
-				content = content + '</ul>';
-			} else {
-				content = content + '<li>' + f + ': ' + updaterData[f] + '</li>';
-			}
-		}
-		content = content + '</ul>';
-	}
-	panel.innerHTML = content;
-}
-
-function clearThreads() {
-	if (animationThreads.size > 0) {
-		debugLog("Clearing threads:");
-		for (let [key, name] of animationThreads) {
-			stopAnimThread(key, name);
-		}
-	}
-}
-
-function startAnimThread(animId, name) {
-	if (maintenanceMode) {
-		debugLog ("Thread creation disabled in maintenance mode");
-		stopAnimThread(animId, name);
-	}
-	debugLog("Adding thread #" + animId + ": " + name);
-	animationThreads.set(animId, name);
-	debugLog("Current thread count:" + animationThreads.size);
-	displayThreads();
-	return animId;
-}
-
-function stopAnimThread(animId, name) {
-	debugLog("Stopping thread #" + animId + ": " + name);
-	if (animationThreads.has(animId)) {
-		animationThreads.delete(animId)
-	}
-	clearInterval(animId);
-	debugLog("Remaining thread count:" + animationThreads.size);
-	displayThreads();
-}
-
-function displayThreads() {
-	if (animationThreads.size > 0) {
-		debugLog("Active threads:");
-		for (let [key, name] of animationThreads) {
-			debugLog("Thread #" + key + ": " + name);
-		}
-	} else {
-		debugLog("No active threads");
-	}
-}
-
-function isConfigurationExpired() {
-	if (configurationMap.get("expiration") == undefined) {
-		return true;
-	}
-	return (!configurationMap.has("expiration")) || (configurationMap.get("expiration") < (new Date()).getTime());
+	var Widget = {};
+	Widget.id = Date.now();
+	Widget.rootPanel = panelContainer;
+	Widget.titlePanel = panelTitle;
+	Widget.contentPanel = panelContent;
+	widgets.push(Widget);
+	return Widget;
 }
 
 function refreshData() {
@@ -141,8 +140,9 @@ function refreshData() {
 	xmlhttp.onreadystatechange = function() {
 		if (xmlhttp.readyState == XMLHttpRequest.DONE) {
 			if (xmlhttp.status == 200) {
+				Console.lastDataUpdate = new Date();
 				healthdata = JSON.parse(xmlhttp.responseText);
-				updatePanels();
+				invokeListeners();
 			} else if (xmlhttp.status == 400) {
 				debugLog('There was an error 400');
 			} else {
@@ -155,33 +155,6 @@ function refreshData() {
     xmlhttp.send();
 }
 
-function updatePanels() {
-	createUpdaterPanel('CalendarUpdater');
-}
-
-function sleep(milliseconds) {
-  var start = new Date().getTime();
-  for (var i = 0; i < 1e7; i++) {
-    if ((new Date().getTime() - start) > milliseconds){
-      break;
-    }
-  }
-}
-
-function debugLog(msg) {
-	if (DEBUG) {
-		console.log(msg)
-	}
-}
-
-// Event handling
-/*
-window.onresize = function (event) {
-	MAX_WINDOW_WIDTH = window.innerWidth;
-	MAX_WINDOW_HEIGHT = window.innerHeight;
-	HIDE_MARGIN = MAX_WINDOW_WIDTH + BOX_SPACING;
-}
-*/
 window.onload = function(event) {
 	initConsole();
 }
