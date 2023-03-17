@@ -4,30 +4,47 @@ UpdatersViewer.onData = (data) => {
 	console.log(data);
 }
 
-var widget;
+var widget1;
+var widget2;
 
-function initWidget() {
-	Console.register(UpdatersViewer);
-	widget = Console.createWidget("Updaters", "0px", "0px", "50%", "50%");
-	initTabs();
-	panels = document.getElementsByClassName('consolepanelcontainer')[0];
-	refreshData();
+class UpdatersListener extends Listener {
+	#widget;
+	constructor(widget) {
+		super(widget.id);
+		this.#widget = widget;
+	}
+	
+	onData(data) {
+		//console.log(data);
+		widget2.content.innerHTML = ConsoleFactory.widgetsInformation.map(i => "ID: " + i.id + " displayed: " + i.onWorkspace + " type: " + i.type + "<br>");
+		this.#widget.content.innerHTML = data;
+	}
 }
 
-function initTabs() {
+function initWidget() {
+	widget1 = ConsoleFactory.createDecoratedWidget("Updaters1");
+	widget2 = ConsoleFactory.createDecoratedWidget("Updaters2");
+	ConsoleFactory.subscribeToData(new UpdatersListener(widget1));
+	ConsoleFactory.subscribeToData(new UpdatersListener(widget2));
+	//initTabs(widget);
+	ConsoleFactory.addWidgetToWorkspace(widget1);
+	ConsoleFactory.addWidgetToWorkspace(widget2);
+}
+
+function initTabs(widget) {
 	
 	// MUST CREATE TABS HERE (Check console.html for HTML code to convert to JS)
 	
 	
-	const tabCalendar = widget.contentPanel.querySelector(".tab-calendar");
-	const tabConfig = widget.contentPanel.querySelector(".tab-config");
-	const tabImages = widget.contentPanel.querySelector(".tab-images");
-	const tabNews = widget.contentPanel.querySelector(".tab-news");
+	const tabCalendar = widget.content.querySelector(".tab-calendar");
+	const tabConfig = widget.content.querySelector(".tab-config");
+	const tabImages = widget.content.querySelector(".tab-images");
+	const tabNews = widget.content.querySelector(".tab-news");
 
-	const contentCalendar = widget.contentPanel.querySelector(".content-calendar");
-	const contentConfig = widget.contentPanel.querySelector(".content-config");
-	const contentImages = widget.contentPanel.querySelector(".content-images");
-	const contentNews = widget.contentPanel.querySelector(".content-news");
+	const contentCalendar = widget.content.querySelector(".content-calendar");
+	const contentConfig = widget.content.querySelector(".content-config");
+	const contentImages = widget.content.querySelector(".content-images");
+	const contentNews = widget.content.querySelector(".content-news");
 
 	tabCalendar.classList.add("tabone");
 	contentCalendar.style.display = "flex";
@@ -81,41 +98,6 @@ function initTabs() {
 
 }
 
-function createUpdaterPanel(title) {
-	var panel = document.getElementsByClassName("content-calendar")[0];
-	var updaterData;
-	var content = '<i>No data available</i>';
-	if (healthdata) {
-		var processes = healthdata.updaterthread.processes;
-		var count = processes.length;
-		for (var i = 0; i < count; i++) {
-			console.log(processes[i].name);
-			if (processes[i].name == title) {
-				updaterData = processes[i];
-				break;
-			}
-		}
-	}
-	if (updaterData) {
-		var content = '<ul>';
-		for (var f in updaterData) {
-			if (f == 'customdata') {
-				content = content + '<li>' + f + ': </li>';
-				var customData = updaterData[f];
-				content = content + '<ul>';
-				for (var c in customData) {
-					content = content + '<li>' + c + ': ' + customData[c] + '</li>';
-				}
-				content = content + '</ul>';
-			} else {
-				content = content + '<li>' + f + ': ' + updaterData[f] + '</li>';
-			}
-		}
-		content = content + '</ul>';
-	}
-	panel.innerHTML = content;
-}
-
 function clearThreads() {
 	if (animationThreads.size > 0) {
 		debugLog("Clearing threads:");
@@ -165,32 +147,6 @@ function isConfigurationExpired() {
 	return (!configurationMap.has("expiration")) || (configurationMap.get("expiration") < (new Date()).getTime());
 }
 
-function refreshData() {
-	debugLog ("refreshData");
-	var xmlhttp = new XMLHttpRequest();
-
-	xmlhttp.onreadystatechange = function() {
-		if (xmlhttp.readyState == XMLHttpRequest.DONE) {
-			if (xmlhttp.status == 200) {
-				healthdata = JSON.parse(xmlhttp.responseText);
-				updatePanels();
-			} else if (xmlhttp.status == 400) {
-				debugLog('There was an error 400');
-			} else {
-				debugLog('something else other than 200 was returned');
-			}
-		}
-	};
-
-    xmlhttp.open("GET", HEALTH_URL, true);
-    xmlhttp.send();
-}
-
-function updatePanels() {
-	setTimeout(refreshData, 5000);
-	createUpdaterPanel('CalendarUpdater');
-}
-
 function sleep(milliseconds) {
   var start = new Date().getTime();
   for (var i = 0; i < 1e7; i++) {
@@ -200,12 +156,6 @@ function sleep(milliseconds) {
   }
 }
 
-function debugLog(msg) {
-	if (DEBUG) {
-		console.log(msg)
-	}
-}
-
 // Event handling
 /*
 window.onresize = function (event) {
@@ -213,7 +163,8 @@ window.onresize = function (event) {
 	MAX_WINDOW_HEIGHT = window.innerHeight;
 	HIDE_MARGIN = MAX_WINDOW_WIDTH + BOX_SPACING;
 }
-*/
+
 window.onload = function(event) {
-	initConsole();
+	initWidget();
 }
+*/

@@ -109,7 +109,9 @@ nav::after {
 }
 
 .consolepanelcontainer {
-  display: block;
+  display: flex;
+  flex-flow: row wrap;
+  justify-content: space-around;
   top: 70px;
   left: 20px;
   bottom: 20px;
@@ -122,6 +124,8 @@ nav::after {
   box-sizing: border-box;
   opacity: 0.8;
 }
+
+.widget
 
 .consolepanel {
   border: 0px;
@@ -137,7 +141,12 @@ nav::after {
   background-color: #888888;
 }
 
-.paneltitle {
+.widgetframe {
+  width: 500px;
+  height:400px
+}
+
+.widgettitle {
   margin: 0px;
   padding: 5px;
   color: white;
@@ -147,7 +156,7 @@ nav::after {
   opacity: 1;
 }
 
-.panelcontent {
+.widgetcontent {
   padding: 5px;
   display: block;
   top: 0px;

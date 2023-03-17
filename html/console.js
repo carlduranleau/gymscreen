@@ -1,148 +1,25 @@
 // Constants
-HEALTH_URL = "http://localhost:5002/health"		// Health url
-NEWS_FEED_URL = "http://localhost:5002/feed"		// News feed url
-EVENTS_FEED_URL = "http://localhost:5002/calendarfeed"		// Events feed url
-FILE_URL = "http://localhost:5002/images"	// Images feed url
-CONFIG_URL = "http://localhost:5002/config"	// Configuration feed url
-MAX_WINDOW_WIDTH = window.innerWidth;		// Browser width
-MAX_WINDOW_HEIGHT = window.innerHeight;		// Browser height
-BOX_SPACING = 20;							// General element spacing
-CONSOLE_UPDATE_DELAY = 2000					// Console refresh delay
+HEALTH_URL = "http://localhost:5002/health"		// Health data url
+CONSOLE_UPDATE_DELAY = 5000					// Console refresh delay
 DEBUG = true;
 
-// Shared Console static class.
-var Console = {};
-Console.workspace = {};
-// Trigger a data update. Listeners will be notified through the onData method.
-Console.triggerUpdate = () => {
-	try {
-		refreshData();
-	} catch (e) {
-		console.log("Console.triggerUpdate: " + e);
-	}
-};
-// Create a new UI widget with title and content panel.
-Console.createWidget = (title, top, left, width, height) => {
-	try {
-		return createWidget(title, top, left, width, height);
-	} catch (e) {
-		console.log("Console.createWidget: " + e);
-	}
-	return;
-};
-// Create a new empty UI widget.
-Console.createRawWidget = (top, left, width, height) => {
-	try {
-		return createRawWidget(top, left, width, height);
-	} catch (e) {
-		console.log("Console.createRawWidget: " + e);
-	}
-	return;
-};
-// Add a widget to the console workspace.
-Console.addWidget = (widget) => {
-	try {
-		var foundwidget = widgets.filter(w => w.id === widget.id);
-		if (foundwidget) {
-			Console.workspace.appendChild(widget.rootPanel);
-		} else {
-			console.log("Widget with id '" + widget.id + "' not found. Only widgets created using Console.createWidget can be added to workspace.");
-		}
-	} catch(e) {
-		console.log("Console.addWidget: " + e);
-	}
-};
-// Remove a widget from the console workspace. Deleted widgets cannot be added through Console.addWidget.
-Console.removeWidget = (widget) => {
-	try {
-		Console.workspace.removeChild(widget.rootPanel);
-		widgets = widgets.filter(w => w.id !== widget.id);
-	} catch(e) {
-		console.log("Console.removeWidget: " + e);
-	}
-};
-// Add a new data update listener. Every listener must declare an onData method.
-Console.register = (listener) => {
-	try {
-		register(listener);
-	} catch(e) {
-		console.log("Console.register: " + e);
-	}
-};
-
 var healthdata;
-var listeners = [];		// Data listeners registered through the "register" method. They must declare an "onData" method to be called on new data events.
-var widgets = [];		// Registered new UI widget through the "createWidget" method.
 
 function initConsole() {
-	Console.workspace = document.getElementsByClassName('consolepanelcontainer')[0];
 	refreshData();
 	setInterval(refreshData, CONSOLE_UPDATE_DELAY);
 }
 
-function register(listener) {
-	if(listeners.includes(listener)) return;
-	listeners.push(listener);
-}
-
-function invokeListeners() {
-	if (listeners.length == 0) return;
-	try {
-		listeners.forEach(function(listener) {
-			listener.onData(healthdata);
-		});
-	} catch(e) {
-		console.log(e);
-	}
-}
-
-function createRawWidget(top, left, width, height) {
-	panelContainer = document.createElement('div');
-	panelContainer.className = 'consolepanel';
-	panelContainer.style.top = top;
-	panelContainer.style.left = left;
-	panelContainer.style.width = width;
-	panelContainer.style.height = height;
-	var Widget = {};
-	Widget.id = Date.now();
-	Widget.rootPanel = panelContainer;
-	widgets.push(Widget);
-	return Widget;
-}
-
-function createWidget(title, top, left, width, height) {
-	panelContainer = document.createElement('div');
-	panelContainer.className = 'consolepanel';
-	panelContainer.style.top = top;
-	panelContainer.style.left = left;
-	panelContainer.style.width = width;
-	panelContainer.style.height = height;
-	panelTitle = document.createElement('div');
-	panelTitle.className = 'paneltitle';
-	panelTitle.innerHTML = title;
-	panelContent = document.createElement('div');
-	panelContent.className = 'panelcontent';
-	panelContainer.appendChild(panelTitle);
-	panelContainer.appendChild(panelContent);
-	var Widget = {};
-	Widget.id = Date.now();
-	Widget.rootPanel = panelContainer;
-	Widget.titlePanel = panelTitle;
-	Widget.contentPanel = panelContent;
-	widgets.push(Widget);
-	return Widget;
-}
-
 function refreshData() {
-	debugLog ("refreshData");
+	//debugLog ("refreshData");
 	var xmlhttp = new XMLHttpRequest();
 
 	xmlhttp.onreadystatechange = function() {
 		if (xmlhttp.readyState == XMLHttpRequest.DONE) {
 			if (xmlhttp.status == 200) {
-				Console.lastDataUpdate = new Date();
-				healthdata = JSON.parse(xmlhttp.responseText);
-				invokeListeners();
+				//console.log("Got data");
+				healthdata = xmlhttp.responseText;
+				ConsoleFactory.invokeListeners(healthdata);
 			} else if (xmlhttp.status == 400) {
 				debugLog('There was an error 400');
 			} else {
@@ -155,6 +32,272 @@ function refreshData() {
     xmlhttp.send();
 }
 
+class ConsoleFactory {
+	static #listeners = [];
+	static #widgets = [];
+	static #workspace;
+	static #workspaceContent = [];
+	
+	static get widgetsInformation() {
+		return this.#widgets.map(widget => new WidgetInformation(widget.id, this.#isWidgetOnWorkspace(widget), widget.title ? "DECORATED" : "RAW"));
+	}
+
+	static invokeListeners(data) {
+		//console.log("invokeListeners: Listeners count: " + this.#listeners.length);
+		this.#listeners.forEach(listener => listener.onData(data));
+	}
+	
+	// Trigger a data refresh
+	static triggerUpdate() {
+		try {
+			refreshData();
+		} catch (e) {
+			console.log("ConsoleFactory.triggerUpdate: " + e);
+		}
+	}
+	// Create a new UI widget with title and content panel.
+	static createDecoratedWidget(title) {
+		try {
+			var widget = new DecoratedWidget(title);
+			this.#registerWidget(widget);
+			return widget;
+		} catch (e) {
+			console.log("ConsoleFactory.createDecoratedWidget: " + e);
+		}
+		return;
+	}
+	// Create a new empty UI widget.
+	static createWidget() {
+		try {
+			var widget = new Widget();
+			this.#registerWidget(widget);
+			return widget;
+		} catch (e) {
+			console.log("ConsoleFactory.createWidget: " + e);
+		}
+		return;
+	}
+	// Add a widget to the console workspace.
+	static addWidgetToWorkspace(widget) {
+		try {
+			if (this.#isWidget(widget)) {
+				if (this.#isWidgetOnWorkspace(widget)) {
+					console.log("Widget with id '" + widget.id + "' already added to workspace.");
+				} else {
+					console.log("Widget with id '" + widget.id + "' added to workspace.");
+					this.workspace.appendChild(widget.frame);
+					this.#workspaceContent.push(widget);
+				}
+			} else {
+				console.log("Widget with id '" + widget.id + "' not found. Only widgets created using ConsoleFactory.createWidget can be added to workspace.");
+			}
+		} catch(e) {
+			console.log("ConsoleFactory.addWidgetToWorkspace: " + e);
+		}
+	}
+	// Remove a widget to the console workspace.
+	static removeWidgetFromWorkspace(widget) {
+		try {
+			if (this.#isWidgetOnWorkspace(widget)) {
+				this.workspace.removeChild(widget.frame);
+				this.#workspaceContent = this.#workspaceContent.filter(w => w.id !== widget.id);
+			} else {
+				console.log("Widget with id '" + widget.id + "' not found on workspace.");
+			}
+		} catch(e) {
+			console.log("ConsoleFactory.removeWidgetFromWorkspace: " + e);
+		}
+	}
+	
+	// Remove a widget from the console workspace. Deleted widgets cannot be added through Console.addWidget.
+	static deleteWidget(widget) {
+		try {
+			if (this.#isWidget(widget)) {
+				this.remoteWidgetFromWorkspace(widget);
+				this.#widgets = this.#widgets.filter(w => w.id !== widget.id);
+			} else {
+				console.log("Widget with id '" + widget.id + "' not found.");
+			}
+		} catch(e) {
+			console.log("ConsoleFactory.deleteWidget: " + e);
+		}
+	}
+	// Add a new data update listener. Every listener must implement the Listener class, or declare an onData method and a name property.
+	static subscribeToData(listener) {
+		try {
+			if (listener.onData && listener.name) {
+				if (this.#isListener(listener)) {
+					console.log("Listener with name '" + listener.name + "' already subscribed.");
+				} else {
+					this.#listeners.push(listener);
+					console.log("Listener with name '" + listener.name + "' subscribed.");
+				}
+			} else {
+				console.log("Invalid listener. Data subscription aborted.");
+			}
+			console.log("Listeners count: " + this.#listeners.length);
+		} catch(e) {
+			console.log("ConsoleFactory.subscribeToData: " + e);
+		}
+	}
+	// Remove a listener.
+	static unsubscribeToData(listener) {
+		try {
+			if (listener.onData && listener.name) {
+				if (this.#isListener(listener)) {
+					this.#listeners.push(listener);
+				} else {
+					console.log("Listener with name '" + listener.name + "' not found.");
+				}
+			} else {
+				console.log("Invalid listener.");
+			}
+		} catch(e) {
+			console.log("ConsoleFactory.unsubscribeToData: " + e);
+		}
+	}
+	
+	static get workspace() {
+		if (!this.#workspace) {
+			this.#workspace = document.getElementsByClassName("consolepanelcontainer")[0];
+		}
+		return this.#workspace;
+	}
+	
+	static #isWidget(widget) {
+		var foundwidget = this.#widgets.filter(w => w.id === widget.id);
+		if (foundwidget.length > 0) {
+			return true;
+		}
+		return false;
+	}
+	
+	static #isWidgetOnWorkspace(widget) {
+		var foundwidget = this.#workspaceContent.filter(w => w.id === widget.id);
+		if (foundwidget.length > 0) {
+			return true;
+		}
+		return false;
+	}
+
+	static #isListener(listener) {
+		var foundlistener = this.#listeners.filter(l => l.name === listener.name);
+		if (foundlistener.length > 0) {
+			return true;
+		}
+		return false;
+	}
+
+	static #registerWidget(widget) {
+		this.#widgets.push(widget);
+	}
+}
+
+// Information template to return immutable widget information.
+class WidgetInformation {
+	#id;
+	#onWorkspace = false;
+	#type;
+	constructor(id, onWorkspace, type) {
+		this.#id = id;
+		this.#onWorkspace = onWorkspace;
+		this.#type = type;
+	}
+	
+	get id() {
+		return this.#id;
+	}
+	
+	get onWorkspace() {
+		return this.#onWorkspace;
+	}
+	
+	get type() {
+		return this.#type;
+	}
+}
+
+// Base widget frame without title and content panels
+class Widget {
+	#id;
+	#rootPanel;
+	constructor() {
+		this.#id = (new Date()).getTime();
+		this.#build();
+	}
+
+	get id() {
+		return this.#id;
+	}	
+
+	get frame() {
+		return this.#rootPanel;
+	}
+	
+	#build() {
+		var panelContainer = document.createElement('div');
+		panelContainer.className = 'widgetframe';
+		this.#rootPanel = panelContainer;
+	}
+}
+
+// Widget with title and content panels
+class DecoratedWidget extends Widget {
+	#titlePanel;
+	#contentPanel;
+	#title;
+	constructor(title) {
+		super();
+		this.#title = title;
+		this.#build();
+	}
+	
+	get title() {
+		return this.#titlePanel;
+	}
+
+	get content() {
+		return this.#contentPanel;
+	}
+	
+	#build() {
+		var panelTitle = document.createElement('div');
+		panelTitle.className = 'widgettitle';
+		panelTitle.innerHTML = this.#title;
+		var panelContent = document.createElement('div');
+		panelContent.className = 'widgetcontent';
+		this.frame.appendChild(panelTitle);
+		this.frame.appendChild(panelContent);
+		this.#titlePanel = panelTitle;
+		this.#contentPanel = panelContent;		
+	}
+}
+
+// Interface to subscribe to data updates
+class Listener {
+	#name;
+	
+	constructor(name) {
+		this.#name = name;
+	}
+	
+	get name() {
+		return this.#name;
+	}
+	
+	onData(data) {
+		console.log("Listener '" + this.#name + "' hasn't implemented onData method.");
+	}
+}
+
+function debugLog(msg) {
+	if (DEBUG) {
+		console.log(msg)
+	}
+}
+
+/*
 window.onload = function(event) {
 	initConsole();
 }
+*/
