@@ -56,3 +56,6 @@ class Logger(threading.Thread):
 		while self.running and i < delay_in_secs:
 			i += 1;
 			time.sleep(1)
+			
+	def getLogFilename(self):
+		return '{}/{}'.format(self.cache_path, self.filename)

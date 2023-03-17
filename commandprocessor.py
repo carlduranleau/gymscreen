@@ -1,4 +1,6 @@
 from environment import Environment
+from logger import Logger
+from subprocess import check_output
 import os
 
 class CommandProcessor:
@@ -9,13 +11,17 @@ class CommandProcessor:
 		Environment.logger.log('Executing {}.{}'.format(context, command))
 		if len(args) > 0:
 			Environment.logger.log('with arguments: {}'.format(args))
+		result = None
 		match context.upper():
 			case "UI":
-				self.processUICommand(command, args)
+				result = self.processUICommand(command, args)
 			case "SI":
-				self.processSICommand(command, args)
+				result = self.processSICommand(command, args)
 			case "SYS":
-				self.processSYSCommand(command, args)
+				result = self.processSYSCommand(command, args)
+			case "LOG":
+				result = self.processLOGCommand(command, args)
+		return result
 	
 	def processUICommand(self, command, args):
 		match command.upper():
@@ -23,11 +29,21 @@ class CommandProcessor:
 				pass
 			case "RESTART":
 				pass
-	
+		return "OK"
+
+	def processLOGCommand(self, command, args):
+		size = "25"
+		if not command is None:
+			size = command
+		logFileName = Environment.logger.getLogFilename()
+		return check_output('tail -{} {}'.format(size, logFileName), shell=True).decode('ascii').replace('"', '\\"')
+		
+
 	def processSICommand(self, command, args):
 		match command.upper():
 			case "RESTART":
 				Environment.updatethread.shutdown()
+		return "OK"
 	
 	def processSYSCommand(self, command, args):
 		match command.upper():
@@ -44,4 +60,5 @@ class CommandProcessor:
 							Environment.maintenanceMode = args[0]
 						case 'default':
 							Environment.maintenanceMode = None
-		
+		return "OK"
+

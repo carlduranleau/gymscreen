@@ -30,7 +30,8 @@ class HealthFeeder:
 		command = args[1]
 		args.pop(0)
 		args.pop(0)
-		self.commandprocessor.execute(context, command, args)
+		result = self.commandprocessor.execute(context, command, args)
+		self.healthdata = '{{"result":"{}"}}'.format(result)
 	
 	def getHealth(self):
 		self.healthdata = '{{{},{},{}}}'.format(self._getEnvironmentHealth(), self._getUpdatersHealth(), self._getConfig())
