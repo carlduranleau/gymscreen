@@ -1,4 +1,4 @@
-class OSWidget {
+class MemoryWidget {
 	OS_UPDATE_DELAY=2000;
 	OS_COMMAND_URL = "http://localhost:5002/health/os/";
 	widget;
@@ -9,7 +9,7 @@ class OSWidget {
 
 	static init() {
 		var widget = ConsoleFactory.createDecoratedWidget("Memory");
-		var instance = new OSWidget(widget);
+		var instance = new MemoryWidget(widget);
 		ConsoleFactory.addWidgetToWorkspace(widget);
 		setInterval((function(self) {
 				return function () {
