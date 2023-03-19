@@ -1,35 +1,39 @@
 // Constants
-HEALTH_URL = "http://localhost:5002/health"		// Health data url
-CONSOLE_UPDATE_DELAY = 5000					// Console refresh delay
 DEBUG = true;
 
-var healthdata;
+class Console {
+	HEALTH_URL = "http://localhost:5002/health"		// Health data url
+	CONSOLE_UPDATE_DELAY = 5000					// Console refresh delay
 
-function initConsole() {
-	refreshData();
-	setInterval(refreshData, CONSOLE_UPDATE_DELAY);
-}
+	static init() {
+		var instance = new Console();
+		instance.refreshData();
+		setInterval((function(self) {
+				return function () {
+					self.refreshData();
+				}
+			})(instance), instance.CONSOLE_UPDATE_DELAY);
+	}
 
-function refreshData() {
-	//debugLog ("refreshData");
-	var xmlhttp = new XMLHttpRequest();
+	refreshData() {
+		//debugLog ("refreshData");
+		var xmlhttp = new XMLHttpRequest();
 
-	xmlhttp.onreadystatechange = function() {
-		if (xmlhttp.readyState == XMLHttpRequest.DONE) {
-			if (xmlhttp.status == 200) {
-				//console.log("Got data");
-				healthdata = xmlhttp.responseText;
-				ConsoleFactory.invokeListeners(healthdata);
-			} else if (xmlhttp.status == 400) {
-				debugLog('There was an error 400');
-			} else {
-				debugLog('something else other than 200 was returned');
+		xmlhttp.onreadystatechange = function() {
+			if (xmlhttp.readyState == XMLHttpRequest.DONE) {
+				if (xmlhttp.status == 200) {
+					ConsoleFactory.invokeListeners(xmlhttp.responseText);
+				} else if (xmlhttp.status == 400) {
+					debugLog('There was an error 400');
+				} else {
+					debugLog('something else other than 200 was returned');
+				}
 			}
-		}
-	};
+		};
 
-    xmlhttp.open("GET", HEALTH_URL, true);
-    xmlhttp.send();
+		xmlhttp.open("GET", this.HEALTH_URL, true);
+		xmlhttp.send();
+	}
 }
 
 class ConsoleFactory {
@@ -276,13 +280,18 @@ class DecoratedWidget extends Widget {
 // Interface to subscribe to data updates
 class Listener {
 	#name;
-	
-	constructor(name) {
+	#widget;
+	constructor(widget, name) {
+		this.#widget = widget;
 		this.#name = name;
 	}
 	
 	get name() {
 		return this.#name;
+	}
+
+	get widget() {
+		return this.#widget;
 	}
 	
 	onData(data) {
@@ -296,8 +305,3 @@ function debugLog(msg) {
 	}
 }
 
-/*
-window.onload = function(event) {
-	initConsole();
-}
-*/

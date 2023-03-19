@@ -7,11 +7,14 @@
 <link rel="stylesheet" href="console.css">
 <script type="text/javascript" src="console.js"></script>
 <script type="text/javascript" src="console_updaters.js"></script>
+<script type="text/javascript" src="console_logs.js"></script>
+<script type="text/javascript" src="console_health.js"></script>
+<script type="text/javascript" src="console_os.js"></script>
 </head>
-<body onload="initConsole();initWidget();">
+<body onload="Console.init();UpdatersWidget.init();LogsWidget.init();HealthWidget.init();OSWidget.init();">
 	<div class="consolecontainer">
 		<div class="consoletitle">Gymnamic console</div>
-		<div class="consolepanel" style="top:0; left:0; width:50%; height:50%">
+		<div class="consolepanel">
 			<div class="consolepanelcontainer">
 				<!--
 				<div class="tabs-wrapper">

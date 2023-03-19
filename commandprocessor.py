@@ -21,6 +21,8 @@ class CommandProcessor:
 				result = self.processSYSCommand(command, args)
 			case "LOG":
 				result = self.processLOGCommand(command, args)
+			case "OS":
+				result = self.processOSCommand(command, args)
 		return result
 	
 	def processUICommand(self, command, args):
@@ -30,6 +32,16 @@ class CommandProcessor:
 			case "RESTART":
 				pass
 		return "OK"
+
+	def processOSCommand(self, command, args):
+		if not command is None:
+			parsedArgs = ''
+			if not args is None:
+				for arg in args:
+					parsedArgs += ' ' + arg
+				parsedArgs = parsedArgs.replace('%20', ' ')
+			return check_output('{} {}'.format(command, parsedArgs), shell=True).decode('ascii').replace('"', '\\"')
+		return "INVALID"
 
 	def processLOGCommand(self, command, args):
 		size = "25"
