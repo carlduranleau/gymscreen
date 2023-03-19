@@ -11,6 +11,7 @@ class LogsWidget {
 		var widget = ConsoleFactory.createDecoratedWidget("Logs");
 		var instance = new LogsWidget(widget);
 		ConsoleFactory.addWidgetToWorkspace(instance.widget);
+		instance.getLogs();
 		setInterval((function(self) {
 				return function () {
 					self.getLogs();
