@@ -1,15 +1,13 @@
 from flask_restful import Resource
-from flask import Flask, request, send_from_directory
-from config import Config
 from healthfeeder import HealthFeeder
-from flask import make_response
+from flask import make_response,request
 
 class HealthService(Resource):
 
 	feeder = HealthFeeder()
 	
 	def get(self, path=None):
-		self.feeder.load(path)
+		self.feeder.load(path, request.headers.get('auth'))
 		response = make_response(self.feeder.toJSON())
 		response.headers['content-type'] = 'application/json'
 		response.headers['Access-Control-Allow-Origin'] = '*'

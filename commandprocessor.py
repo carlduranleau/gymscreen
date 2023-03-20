@@ -5,10 +5,11 @@ import os
 
 class CommandProcessor:
 		
-	def execute(self, context, command, args):
+	def execute(self, sessiontoken, context, command, args):
+		Environment.security.validateSession(sessiontoken)
 		if context is None or command is None:
 			return
-		Environment.logger.log('Executing {}.{}'.format(context, command))
+		#Environment.logger.log('Executing {}.{}'.format(context, command))
 		if len(args) > 0:
 			Environment.logger.log('with arguments: {}'.format(args))
 		result = None

@@ -2,11 +2,15 @@
 DEBUG = true;
 
 class Console {
+	LOGIN_URL = "http://localhost:5002/auth/"		// Authentication URL
 	HEALTH_URL = "http://localhost:5002/health"		// Health data url
-	CONSOLE_UPDATE_DELAY = 5000					// Console refresh delay
+	CONSOLE_UPDATE_DELAY = 5000						// Console refresh delay
+	static instance;
+	static sessiontoken;
 
 	static init() {
 		var instance = new Console();
+		instance.login();
 		instance.refreshData();
 		setInterval((function(self) {
 				return function () {
@@ -15,24 +19,61 @@ class Console {
 			})(instance), instance.CONSOLE_UPDATE_DELAY);
 	}
 
-	refreshData() {
-		//debugLog ("refreshData");
-		var xmlhttp = new XMLHttpRequest();
+	static get sessiontoken() {
+		return this.sessiontoken;
+	}
 
+	static request(method, url, isAsync, onsuccess, onerror) {
+		debugLog ("Console.request");
+		var xmlhttp = new XMLHttpRequest();
+		
 		xmlhttp.onreadystatechange = function() {
 			if (xmlhttp.readyState == XMLHttpRequest.DONE) {
-				if (xmlhttp.status == 200) {
-					ConsoleFactory.invokeListeners(xmlhttp.responseText);
-				} else if (xmlhttp.status == 400) {
-					debugLog('There was an error 400');
-				} else {
-					debugLog('something else other than 200 was returned');
+				if (onsuccess && xmlhttp.status == 200) {
+					onsuccess(xmlhttp.responseText);
+				} else if (xmlhttp.status == 401) {
+					window.location.reload();
+				} else if (onerror) {
+					onerror(xmlhttp.status, xmlhttp.responseText)
 				}
 			}
 		};
-
-		xmlhttp.open("GET", this.HEALTH_URL, true);
+		xmlhttp.open(method, url, isAsync);
+		if (this.sessiontoken) {
+			xmlhttp.setRequestHeader("auth", this.sessiontoken);
+		}
 		xmlhttp.send();
+	}
+
+	login() {
+		var p = prompt("Enter administrator password:");
+		this.createSession(p);
+	}
+	
+	logout() {
+		Console.sessiontoken = '';
+	}
+
+	refreshData() {
+		Console.request(
+			"GET",
+			this.HEALTH_URL,
+			true,
+			(response) => ConsoleFactory.invokeListeners(response),
+			(status, response) => debugLog('something else other than 200 was returned')
+		);
+	}
+	
+	createSession(p) {
+		Console.sessiontoken = '';
+		const self = this;
+		Console.request(
+			"GET",
+			this.LOGIN_URL + p,
+			false,
+			(response) => { Console.sessiontoken = JSON.parse(response).token; },
+			(status, response) => debugLog('createSession: something else other than 200 was returned')
+		);
 	}
 }
 

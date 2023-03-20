@@ -1,5 +1,4 @@
-class CPUWidget {
-	OS_UPDATE_DELAY=2000;
+class ActionPanelWidget {
 	OS_COMMAND_URL = "http://localhost:5002/health/os/";
 	widget;
 
@@ -8,9 +7,9 @@ class CPUWidget {
 	}
 
 	static init() {
-		var widget = ConsoleFactory.createDecoratedWidget("CPU");
-		var instance = new CPUWidget(widget);
-		ConsoleFactory.addWidgetToWorkspace(widget);
+		var widget = ConsoleFactory.createWidget();
+		var instance = new ActionPanelWidget(widget);
+		//ConsoleFactory.addWidgetToWorkspace(widget);
 		instance.getOSData();
 		setInterval((function(self) {
 				return function () {
@@ -19,15 +18,33 @@ class CPUWidget {
 			})(instance), instance.OS_UPDATE_DELAY);
 	}
 
-	getOSData() {
+	buildActionBar() {
+		var actionPanel = document.createElement('div');
+		actionPanel.className = 'consolepanelcontainer';
+		this.widget.frame
+	}
+	
+	createAction(name, command) {
+		var self = this;
+		var rebootAction = document.createElement('button');
+		rebootAction.className = 'consoleaction';
+		rebootAction.innerText = name;
+		rebootaction.onclick = () => self.runCommand(command);
+	}
+	
+
+	runCommand(command) {
 		const self = this;
 		Console.request(
 			"GET",
-			this.OS_COMMAND_URL + 'top/n1/b',
+			this.OS_COMMAND_URL + (command.split(' ').join('/')),
 			true,
 			(response) => self.dataHandler(response),
-			(status, response) => debugLog('getOSData: something else other than 200 was returned')
+			(status, response) => debugLog('runCommand: something else other than 200 was returned')
 		);
+	}
+	
+	confirm() {
 	}
 	
 	dataHandler(response) {

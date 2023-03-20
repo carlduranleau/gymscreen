@@ -5,5 +5,6 @@ if [ "${isrunning}" != "0" ]; then
 	exit 1
 fi
 cd ~/gymnamic
-while true; do python app.py; sleep 1; done
+errorcode=0
+while [ $errorcode -eq 0 ]; do python app.py; errorcode=$?; sleep 1; done
 

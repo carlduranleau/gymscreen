@@ -21,23 +21,18 @@ class NetworkWidget {
 
 	getOSData() {
 		const self = this;
-		var xmlhttp = new XMLHttpRequest();
-		xmlhttp.onreadystatechange = function() { self.dataHandler(xmlhttp); };
-		xmlhttp.open("GET", this.OS_COMMAND_URL + 'iwconfig/wlan0;ifconfig/wlan0', true);
-		xmlhttp.send();
+		Console.request(
+			"GET",
+			this.OS_COMMAND_URL + 'iwconfig/wlan0;ifconfig/wlan0',
+			true,
+			(response) => self.dataHandler(response),
+			(status, response) => debugLog('getOSData: something else other than 200 was returned')
+		);
 	}
 	
-	dataHandler(xmlhttp) {
-		if (xmlhttp.readyState == XMLHttpRequest.DONE) {
-			if (xmlhttp.status == 200) {
-				var parsed = xmlhttp.responseText.replace(/(?:\r\n|\r|\n)/g, '<br>');
-				this.widget.content.innerHTML = this.getFormattedData(JSON.parse(parsed).result);
-			} else if (xmlhttp.status == 400) {
-				debugLog('getOSData: There was an error 400');
-			} else {
-				debugLog('getOSData: something else other than 200 was returned: ' + xmlhttp.status);
-			}
-		}
+	dataHandler(response) {
+		var parsed = response.replace(/(?:\r\n|\r|\n)/g, '<br>');
+		this.widget.content.innerHTML = this.getFormattedData(JSON.parse(parsed).result);
 	}
 	
 	getFormattedData(data) {

@@ -9,8 +9,11 @@ class HealthFeeder:
 	def __init__(self):
 		self.healthdata = None
 		self.commandprocessor = CommandProcessor()
+		self.sessiontoken = None
 		
-	def load(self, command=None):
+	def load(self, command, sessiontoken):
+		self.sessiontoken = sessiontoken
+		Environment.security.validateSession(sessiontoken)
 		self.healthdata = '{"status":"OK"}'
 		try:
 			if command:
@@ -30,7 +33,7 @@ class HealthFeeder:
 		command = args[1]
 		args.pop(0)
 		args.pop(0)
-		result = self.commandprocessor.execute(context, command, args)
+		result = self.commandprocessor.execute( self.sessiontoken, context, command, args)
 		self.healthdata = '{{"result":"{}"}}'.format(result)
 	
 	def getHealth(self):

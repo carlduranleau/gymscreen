@@ -21,23 +21,18 @@ class LogsWidget {
 
 	getLogs() {
 		const self = this;
-		var xmlhttp = new XMLHttpRequest();
-		xmlhttp.onreadystatechange = function() { self.dataHandler(xmlhttp); };
-		xmlhttp.open("GET", this.LOG_COMMAND_URL + '50', true);
-		xmlhttp.send();
+		Console.request(
+			"GET",
+			this.LOG_COMMAND_URL + '50',
+			true,
+			(response) => self.dataHandler(response),
+			(status, response) => debugLog('getLogs: something else other than 200 was returned')
+		);
 	}
 	
-	dataHandler(xmlhttp) {
-		if (xmlhttp.readyState == XMLHttpRequest.DONE) {
-			if (xmlhttp.status == 200) {
-				var parsed = xmlhttp.responseText.replace(/(?:\r\n|\r|\n)/g, '<br>');
-				this.widget.content.innerHTML = JSON.parse(parsed).result;
-			} else if (xmlhttp.status == 400) {
-				debugLog('getLogs: There was an error 400');
-			} else {
-				debugLog('getLogs: something else other than 200 was returned: ' + xmlhttp.status);
-			}
-		}
+	dataHandler(response) {
+		var parsed = response.replace(/(?:\r\n|\r|\n)/g, '<br>');
+		this.widget.content.innerHTML = JSON.parse(parsed).result;
 	}
 }
 

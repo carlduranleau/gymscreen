@@ -143,6 +143,16 @@ nav::after {
   #background-color: #888888;
 }
 
+.consoleaction {
+  width: 50px;
+  height: 30px;
+  color: white;
+  opacity: 0.9;
+  font-size: 20px;
+  font-weight: bold;
+  background-color: #222222;
+}
+
 .widgetframe {
   margin: 10px;
   width: 500px;

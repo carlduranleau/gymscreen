@@ -6,6 +6,8 @@ from googleauthenticator import GoogleAuthenticator
 from httpservice import HttpService
 from httpimageservice import HttpImageService
 from healthservice import HealthService
+from securityservice import SecurityService
+from securityfeeder import SecurityFeeder
 from updatethread import UpdateThread
 from config import Config
 from calendarupdater import CalendarUpdater
@@ -16,6 +18,7 @@ from environment import Environment
 from logger import Logger
 import signal
 import os
+import logging
 
 def shutdown(signum=None, frame=None):
 	threadshutdown = []
@@ -58,6 +61,9 @@ api.add_resource(HttpImageService, Config.IMAGES_URL, Config.IMAGES_URL + '/<pat
 # Console and Health service
 api.add_resource(HealthService, Config.HEALTH_URL, Config.HEALTH_URL + '/<path:path>')
 
+# Security service
+api.add_resource(SecurityService, Config.SECURITY_URL, Config.SECURITY_URL + '/<path:path>')
+
 # Web server file service
 api.add_resource(HttpService, '/', '/<path:path>')
 
@@ -78,10 +84,14 @@ Environment.updatethread = UpdateThread([
 ], 10)
 Environment.updatethread.start()
 Environment.logger.start()
+Environment.security = SecurityFeeder(Config.CACHE_PATH)
 signal.signal(signal.SIGTERM, shutdown)
 signal.signal(signal.SIGINT, shutdown)
 
 Environment.logger.log('Application started.')
+
+log = logging.getLogger('werkzeug')
+log.setLevel(logging.ERROR);
 
 if __name__ == '__main__':
      app.run(port=Config.SERVER_PORT)

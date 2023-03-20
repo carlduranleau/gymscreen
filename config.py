@@ -7,9 +7,11 @@ class Config:
 	CONFIG_FILE = 'config.properties'
 	CONFIG_URL = '/config'
 	CONSOLE_URL = '/console'
+	SECURITY_URL = '/auth'
 	HEALTH_URL = '/health'
 	NEWS_FILE = 'news'
 	NEWS_URL = '/feed'
 	IMAGES_DIR = 'images'
 	IMAGE_EXTENSIONS = ['png', 'jpg']
 	IMAGES_URL = '/images'
+	SESSION_TTL = 300000

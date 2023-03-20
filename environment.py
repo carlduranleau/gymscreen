@@ -5,3 +5,4 @@ class Environment:
 	maintenanceMode = None
 	logger = None
 	updatethread = None
+	security = None
