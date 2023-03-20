@@ -1,6 +1,6 @@
 class CPUWidget {
 	OS_UPDATE_DELAY=2000;
-	OS_COMMAND_URL = "http://localhost:5002/health/os/";
+	OS_COMMAND_URL = "/health/os/";
 	widget;
 
 	constructor(widget) {

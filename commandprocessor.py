@@ -10,8 +10,8 @@ class CommandProcessor:
 		if context is None or command is None:
 			return
 		#Environment.logger.log('Executing {}.{}'.format(context, command))
-		if len(args) > 0:
-			Environment.logger.log('with arguments: {}'.format(args))
+		#if len(args) > 0:
+		#	Environment.logger.log('with arguments: {}'.format(args))
 		result = None
 		match context.upper():
 			case "UI":

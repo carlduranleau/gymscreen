@@ -1,5 +1,5 @@
 class ActionPanelWidget {
-	OS_COMMAND_URL = "http://localhost:5002/health/os/";
+	OS_COMMAND_URL = "/health/os/";
 	widget;
 
 	constructor(widget) {

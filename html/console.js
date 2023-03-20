@@ -2,8 +2,8 @@
 DEBUG = true;
 
 class Console {
-	LOGIN_URL = "http://localhost:5002/auth/"		// Authentication URL
-	HEALTH_URL = "http://localhost:5002/health"		// Health data url
+	LOGIN_URL = "/auth/"		// Authentication URL
+	HEALTH_URL = "/health"		// Health data url
 	CONSOLE_UPDATE_DELAY = 5000						// Console refresh delay
 	static instance;
 	static sessiontoken;

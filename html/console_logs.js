@@ -1,6 +1,6 @@
 class LogsWidget {
 	LOGS_UPDATE_DELAY=2000;
-	LOG_COMMAND_URL = "http://localhost:5002/health/log/";
+	LOG_COMMAND_URL = "/health/log/";
 	widget;
 
 	constructor(widget) {
