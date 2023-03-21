@@ -11,12 +11,6 @@ class Console {
 	static init() {
 		var instance = new Console();
 		instance.login();
-		instance.refreshData();
-		setInterval((function(self) {
-				return function () {
-					self.refreshData();
-				}
-			})(instance), instance.CONSOLE_UPDATE_DELAY);
 	}
 
 	static get sessiontoken() {
@@ -24,7 +18,7 @@ class Console {
 	}
 
 	static request(method, url, isAsync, onsuccess, onerror) {
-		debugLog ("Console.request");
+		//debugLog ("Console.request");
 		var xmlhttp = new XMLHttpRequest();
 		
 		xmlhttp.onreadystatechange = function() {
@@ -46,8 +40,13 @@ class Console {
 	}
 
 	login() {
-		var p = prompt("Enter administrator password:");
-		this.createSession(p);
+		//var p = prompt("Enter administrator password:");
+		//this.createSession(p);
+		if(!Console.sessiontoken) {
+			this.showLogin();
+		} else {
+			ConsoleFactory.showWorkspace();
+		}
 	}
 	
 	logout() {
@@ -55,23 +54,90 @@ class Console {
 	}
 
 	refreshData() {
-		Console.request(
-			"GET",
-			this.HEALTH_URL,
-			true,
-			(response) => ConsoleFactory.invokeListeners(response),
-			(status, response) => debugLog('something else other than 200 was returned')
-		);
+		if (ConsoleFactory.listenersCount > 0 && Console.sessiontoken) {
+			Console.request(
+				"GET",
+				this.HEALTH_URL,
+				true,
+				(response) => ConsoleFactory.invokeListeners(response),
+				(status, response) => debugLog('something else other than 200 was returned')
+			);
+			setTimeout((function(self) {
+				return function () {
+					self.refreshData();
+				}
+			})(this), this.CONSOLE_UPDATE_DELAY);
+		} else {
+			console.log("Can't refresh");
+		}
 	}
-	
+
+	showLogin() {
+		ConsoleFactory.workspace.style.visibility = 'hidden';
+		var loginWindow = document.getElementsByClassName("consolelogincontainer")[0]
+		if (loginWindow) {
+			loginWindow.style.visibility = 'visible';
+		} else {
+			const self = this;
+			Console.request(
+				"GET",
+				"/l.html",
+				true,
+				(response) => {
+					const consolePanel = document.getElementsByClassName("consolecontainer")[0];
+					loginWindow = document.createElement('div');
+					loginWindow.className = "consolelogincontainer"
+					loginWindow.innerHTML = response;
+					document.body.appendChild(loginWindow);
+					loginWindow.style.visibility = 'visible';
+					const loginField = document.getElementById("pw");
+					const loginButton = document.getElementById("login");
+					loginButton.onclick = (e) => { self.processLogin(loginField.value); loginField.value="";return false; };
+					loginField.onkeypress = (e) => { 
+						if (e.keyCode == 13) {
+							self.processLogin(loginField.value);
+							loginField.value="";
+							return false;
+						}
+						return true;
+					};
+					loginField.focus();
+					
+				},
+				(status, response) => alert('ERROR: Cannot load login prompt.')
+			);
+
+		}
+	}
+
+	showWorkspace() {
+		const loginWindow = document.getElementsByClassName("consolelogincontainer")[0]
+		if (loginWindow) {
+			loginWindow.style.visibility = 'hidden';
+		}
+		ConsoleFactory.workspace.style.visibility = 'visible';
+	}
+
+	processLogin(pw) {
+		this.createSession(pw);
+	}
+
 	createSession(p) {
 		Console.sessiontoken = '';
 		const self = this;
 		Console.request(
 			"GET",
 			this.LOGIN_URL + p,
-			false,
-			(response) => { Console.sessiontoken = JSON.parse(response).token; },
+			true,
+			(response) => { 
+				Console.sessiontoken = JSON.parse(response).token;
+				if(!Console.sessiontoken) {
+					self.showLogin();
+				} else {
+					self.showWorkspace();
+					self.refreshData();
+				}
+			},
 			(status, response) => debugLog('createSession: something else other than 200 was returned')
 		);
 	}
@@ -87,19 +153,14 @@ class ConsoleFactory {
 		return this.#widgets.map(widget => new WidgetInformation(widget.id, this.#isWidgetOnWorkspace(widget), widget.title ? "DECORATED" : "RAW"));
 	}
 
+	static get listenersCount() {
+		return this.#listeners.length;
+	}
+
 	static invokeListeners(data) {
-		//console.log("invokeListeners: Listeners count: " + this.#listeners.length);
 		this.#listeners.forEach(listener => listener.onData(data));
 	}
 	
-	// Trigger a data refresh
-	static triggerUpdate() {
-		try {
-			refreshData();
-		} catch (e) {
-			console.log("ConsoleFactory.triggerUpdate: " + e);
-		}
-	}
 	// Create a new UI widget with title and content panel.
 	static createDecoratedWidget(title) {
 		try {
@@ -127,9 +188,9 @@ class ConsoleFactory {
 		try {
 			if (this.#isWidget(widget)) {
 				if (this.#isWidgetOnWorkspace(widget)) {
-					console.log("Widget with id '" + widget.id + "' already added to workspace.");
+					//console.log("Widget with id '" + widget.id + "' already added to workspace.");
 				} else {
-					console.log("Widget with id '" + widget.id + "' added to workspace.");
+					//console.log("Widget with id '" + widget.id + "' added to workspace.");
 					this.workspace.appendChild(widget.frame);
 					this.#workspaceContent.push(widget);
 				}
@@ -174,13 +235,16 @@ class ConsoleFactory {
 				if (this.#isListener(listener)) {
 					console.log("Listener with name '" + listener.name + "' already subscribed.");
 				} else {
+					if (this.#listeners.count == 0) {
+						Console.instance.refreshData();
+					}
 					this.#listeners.push(listener);
-					console.log("Listener with name '" + listener.name + "' subscribed.");
+					//console.log("Listener with name '" + listener.name + "' subscribed.");
 				}
 			} else {
 				console.log("Invalid listener. Data subscription aborted.");
 			}
-			console.log("Listeners count: " + this.#listeners.length);
+			//console.log("Listeners count: " + this.#listeners.length);
 		} catch(e) {
 			console.log("ConsoleFactory.subscribeToData: " + e);
 		}

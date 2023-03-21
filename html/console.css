@@ -122,6 +122,56 @@ nav::after {
   overflow: hidden;
   box-sizing: border-box;
   opacity: 0.8;
+  visibility: hidden;
+}
+
+.consolelogincontainer {
+  display: flex;
+  flex-flow: row;
+  flex-wrap: nowrap;
+  justify-content: space-around;
+  top: 0px;
+  left: 0px;
+  bottom: 0px;
+  right: 0px;
+  width: 100%;
+  height: 100%;
+  margin: 0px;
+  padding: 0px;
+  border: 0px;
+  position: relative;
+  overflow: hidden;
+  box-sizing: border-box;
+  opacity: 0.8;
+  visibility: hidden;
+}
+
+.consoleloginbox {
+  display: flex;
+  flex-flow: column;
+  flex-wrap: nowrap;
+  background-color: #888888;
+  margin-top:100%;
+  padding:10px;
+  height:95px;
+  width:250px;
+  border: 0px;
+  border-radius: 8px;
+  box-sizing: border-box;
+  box-shadow: 0 1px 3px 0 rgba(60,64,67,0.302), 0 4px 8px 3px rgba(60,64,67,0.149);
+}
+
+.consoleloginbox label {
+  font-weight: bold;
+}
+
+.consoleloginbox input {
+  margin-top: 5px;
+}
+
+.consoleloginbox button {
+  margin-top: 10px;
+  width: 50px;
 }
 
 .consolepanel {
