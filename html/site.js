@@ -240,7 +240,6 @@ class Thread {
 	#lastrunstamp;
 	#running = false;
 	constructor(func, params, interval) {
-		console.log("Thread.new");
 		this.#id = window.performance.now();
 		this.#func = func;
 		this.#params = params; 
@@ -248,14 +247,14 @@ class Thread {
 		
 		this.#params.push(this);
 		if (interval) {
-			console.log("Interval (" + interval + "ms) thread " + this.#id + " created.");
+			debugLog("Interval (" + interval + "ms) thread " + this.#id + " created.");
 		} else {
-			console.log("Thread " + this.#id + " created.");
+			debugLog("Thread " + this.#id + " created.");
 		}
 	}
 	
 	start(){
-		console.log("Thread " + this.#id + " started.");
+		debugLog("Thread " + this.#id + " started.");
 		if (!this.#running) {
 			this.#lastrunstamp = (new Date()).getTime();
 			this.#running = true;
@@ -264,7 +263,7 @@ class Thread {
 	}
 	
 	stop() {
-		console.log("Thread " + this.#id + " stopped.");
+		debugLog("Thread " + this.#id + " stopped.");
 		this.#running = false;
 	}
 	

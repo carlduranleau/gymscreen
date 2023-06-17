@@ -32,19 +32,20 @@ function createEventBox(title, message, container) {
 
 // Create UI events box and hide it
 function createEventsContainer() {
-	eventsContainer = document.createElement("div");
-	eventsContainer.setAttribute("class", "eventscontainer");
-	eventsContainer.style.left = BOX_SPACING + "px";
-	eventsContainer.style.top = BOX_SPACING + "px";
-	document.body.appendChild(eventsContainer);
+	if (!eventsContainer) {
+		eventsContainer = document.createElement("div");
+		eventsContainer.setAttribute("class", "eventscontainer");
+		eventsContainer.style.left = BOX_SPACING + "px";
+		eventsContainer.style.top = BOX_SPACING + "px";
+		document.body.appendChild(eventsContainer);
+	}
 	return eventsContainer;
 }
 
 // Add a new event to the available events list
 function addEvent (newEvent) {
-	console.log("addEvent");
 	if (!eventsContainer) {
-		createEventsContainer("");
+		createEventsContainer();
 	}
 	var event = new Event(newEvent.event_id, createEventBox(formatDateTime(newEvent.start), formatContent(newEvent), eventsContainer));
 	allEventsBoxes.push(event);
@@ -166,7 +167,6 @@ function rotateEvents() {
 				if (visibleEventsBoxes[i].animId != -1) {
 					stopEventsAnim(visibleEventsBoxes[i]);
 				}
-				//animId = startAnimThread(setInterval(animEventsBox, 5, visibleEventsBoxes[i], BOX_SPACING - 10, parseInt(eventsContainer.clientHeight) + BOX_SPACING), "Hide events New #" + visibleEventsBoxes[i].id);
 				const newX = BOX_SPACING - 10;
 				const newY = parseInt(eventsContainer.clientHeight) + BOX_SPACING;
 				const o = visibleEventsBoxes[i];
@@ -184,7 +184,6 @@ function rotateEvents() {
 			if (nextVisibleEventsBoxes[i].animId != -1) {
 				stopEventsAnim(nextVisibleEventsBoxes[i]);
 			}
-			//animId = startAnimThread(setInterval(animEventsBox, 5, nextVisibleEventsBoxes[i], BOX_SPACING - 10, currentHeight), "Show events New #" + nextVisibleEventsBoxes[i].id);
 			const newX = BOX_SPACING - 10;
 			const newY = currentHeight;
 			const o = nextVisibleEventsBoxes[i];
@@ -200,7 +199,7 @@ function rotateEvents() {
 // Parse events data
 function loadEventsData(jsonData) {
 	var data = JSON.parse(jsonData);
-
+	createEventsContainer();
 	if (data.events && data.events.length > 0) {
 		for (var j = 0; j < data.events.length; j++) {
 			found = false;

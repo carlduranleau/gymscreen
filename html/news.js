@@ -42,7 +42,6 @@ function addNews (newNews) {
 function newsAnimationInProgress() {
 	for (var i = 0; i < allNewsBoxes.length; i++) {
 		if(allNewsBoxes[i].animId != -1) {
-			console.log("Found alive box with id #" + allNewsBoxes[i].animId);
 			return true;
 		}
 	}
@@ -147,9 +146,7 @@ function setZIndex() {
 
 // Update screen with new nextVisibleNewsBoxes
 function placeNewsBoxes() {
-	console.log("placeNewsBoxes");
 	if (newsAnimationInProgress()) {
-		console.log("Waiting...");
 		waitForNewsAnimation(placeNewsBoxes);
 		return;
 	}
@@ -164,9 +161,6 @@ function placeNewsBoxes() {
 			if (visibleNewsBoxes[i].animId != -1) {
 				stopNewsAnim(visibleNewsBoxes[i]);
 			}
-			//animId = startAnimThread(setInterval(animNewsBox, 5, visibleNewsBoxes[i], MAX_WINDOW_WIDTH - BOX_SPACING - parseInt(visibleNewsBoxes[i].box.clientWidth), -(BOX_SPACING + parseInt(visibleNewsBoxes[i].box.clientHeight))), "Hide News box #" + visibleNewsBoxes[i].id);
-			
-			//animId = startAnimThread(setInterval(animNewsBox, 5, visibleNewsBoxes[i], MAX_WINDOW_WIDTH - BOX_SPACING - parseInt(visibleNewsBoxes[i].box.clientWidth), MAX_WINDOW_WIDTH + BOX_SPACING), "Hide News box #" + visibleNewsBoxes[i].id);
 			const newX = MAX_WINDOW_WIDTH - BOX_SPACING - parseInt(visibleNewsBoxes[i].box.clientWidth);
 			const newY = MAX_WINDOW_WIDTH + BOX_SPACING;
 			const o = visibleNewsBoxes[i];
@@ -202,7 +196,6 @@ function placeNewsBoxes() {
 
 // Parse news data
 function loadNewsData(jsonData) {
-	console.log("loadNewsData");
 	var data = JSON.parse(jsonData);
 
 	if (data.news && data.news.length > 0) {
@@ -268,7 +261,6 @@ function waitForNewsAnimation(nextFunction, thread) {
 
 // Load new data from Google Keep JSON feed
 function getRemoteNewFeedData() {
-	console.log("getRemoteNewFeedData");
 	if (newsAnimationInProgress()) {
 		waitForNewsAnimation(getRemoteNewFeedData);
 		return;

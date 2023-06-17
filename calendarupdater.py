@@ -21,15 +21,20 @@ class CalendarUpdater(UpdateProcess):
 		self.range_end = None
 		
 	def update(self):
-		self.range_start = datetime.now()
-		self.range_end = datetime.now() + relativedelta(months=self.timerange)
-		events = self.calendarAPI.getService().get_events(self.range_start, self.range_end)
+		start = datetime.now()
+		end = datetime.now() + relativedelta(months=12)
 		remote_events = []
-		if events:
+		getMore = True
+		while(getMore):
+			self.range_start = start
+			self.range_end = start + relativedelta(months=self.timerange)
+			events = self.calendarAPI.getService().get_events(self.range_start, self.range_end)
 			for event in events:
-				# print(json.dumps(event.__dict__, indent=4, sort_keys=True, default=str))
-				if event:
-					remote_events.append(event)
+				remote_events.append(event)
+			if self.range_end < end and len(remote_events) < 1:
+				start = self.range_end
+			else:
+				getMore = False
 		self._persist_to_disk(remote_events)
 	
 	def _persist_to_disk(self, data):

@@ -18,6 +18,6 @@ function initTimeWidget() {
 	widget.style.top = window.innerHeight - 80;
 	document.body.appendChild(widget);
 	refreshDate(widget);
-	setInterval(refreshDate, 30000, widget);
+	ThreadManager.createThread(refreshDate, [widget], 30000).start();
 }
 
