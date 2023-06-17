@@ -64,7 +64,9 @@ function stopAnimThread(animId, name) {
 	if (animationThreads.has(animId)) {
 		animationThreads.delete(animId)
 	}
-	clearInterval(animId);
+	if (!name.startsWith("RAT$")) {
+		clearInterval(animId);
+	}
 	debugLog("Remaining thread count:" + animationThreads.size);
 	displayThreads();
 }
@@ -177,6 +179,136 @@ function sleep(milliseconds) {
 function debugLog(msg) {
 	if (DEBUG) {
 		console.log(msg)
+	}
+}
+
+class ThreadManager {
+	static #threads = new Map();
+	
+	static createThread(runnerFunc, params, interval) {
+		const thread = new Thread(runnerFunc, params, interval);
+		this.register(thread);
+		return thread;
+	}
+
+	static stopThread(id) {
+		const thread = this.#threads.get(id);
+		if (thread) {
+			this.unregister(thread);
+		}
+	}
+	
+	static register(newThread) {
+		if (!this.isRegistered(newThread)) {
+			this.#threads.set(newThread.id, newThread);
+		}
+	}
+	
+	static isRegistered(thread) {
+		return this.#threads.has(thread.id);
+	}
+	
+	static threadCount() {
+		return this.#threads.size();
+	}
+	
+	static unregister(thread) {
+		if (this.isRegistered(thread)) {
+			thread.stop();
+			this.#threads.delete(thread);
+		}
+	}
+	
+	static get stats() {
+		var stats = "";
+		if (this.#threads.size > 0) {
+			this.#threads.forEach((t) => {
+				stats += ("Thread #" + t.id + ": " + (t.running ? "Running" : "Stopped") + "\n");
+			});
+		} else {
+			stats = "No thread found.";
+		}
+		return stats
+	}
+}
+
+class Thread {
+	#id;
+	#func;
+	#params;
+	#interval;
+	#lastrunstamp;
+	#running = false;
+	constructor(func, params, interval) {
+		console.log("Thread.new");
+		this.#id = window.performance.now();
+		this.#func = func;
+		this.#params = params; 
+		this.#interval = interval;
+		
+		this.#params.push(this);
+		if (interval) {
+			console.log("Interval (" + interval + "ms) thread " + this.#id + " created.");
+		} else {
+			console.log("Thread " + this.#id + " created.");
+		}
+	}
+	
+	start(){
+		console.log("Thread " + this.#id + " started.");
+		if (!this.#running) {
+			this.#lastrunstamp = (new Date()).getTime();
+			this.#running = true;
+			this.run();
+		}
+	}
+	
+	stop() {
+		console.log("Thread " + this.#id + " stopped.");
+		this.#running = false;
+	}
+	
+	run() {
+		const self = this;
+		const params = this.#params;
+		const func = this.#func;
+		if (this.#running) {
+			if (!this.#interval) {
+				func.apply(null, params);
+				requestAnimationFrame(() => {
+					self.run();
+				});
+			} else {
+				if (this.#interval) {
+					const endTime = (new Date()).getTime() + this.#interval;
+					this.sleepUntil(endTime);
+				}
+			}
+		}
+	}
+	
+	sleepUntil(untilTime) {
+		if (this.#running) {
+			const self = this;
+			const params = this.#params;
+			const func = this.#func;
+			if ((new Date()).getTime() < untilTime) {
+				requestAnimationFrame(() => {
+					self.sleepUntil(untilTime);
+				});
+			} else {
+				func.apply(null, params);
+				self.run();
+			}
+		}
+	}
+	
+	get running() {
+		return this.#running;
+	}
+	
+	get id() {
+		return this.#id;
 	}
 }
 

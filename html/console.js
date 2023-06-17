@@ -9,8 +9,16 @@ class Console {
 	static sessiontoken;
 
 	static init() {
-		var instance = new Console();
-		instance.login();
+		Console.instance = new Console();
+		Console.instance.login();
+	}
+
+	static disconnect() {
+		if (Console.instance) {
+			Console.instance.logout();
+		} else {
+			window.location.reload();
+		}
 	}
 
 	static get sessiontoken() {
@@ -18,7 +26,6 @@ class Console {
 	}
 
 	static request(method, url, isAsync, onsuccess, onerror) {
-		//debugLog ("Console.request");
 		var xmlhttp = new XMLHttpRequest();
 		
 		xmlhttp.onreadystatechange = function() {
@@ -26,7 +33,7 @@ class Console {
 				if (onsuccess && xmlhttp.status == 200) {
 					onsuccess(xmlhttp.responseText);
 				} else if (xmlhttp.status == 401) {
-					window.location.reload();
+					Console.disconnect();
 				} else if (onerror) {
 					onerror(xmlhttp.status, xmlhttp.responseText)
 				}
@@ -40,21 +47,26 @@ class Console {
 	}
 
 	login() {
-		//var p = prompt("Enter administrator password:");
-		//this.createSession(p);
 		if(!Console.sessiontoken) {
 			this.showLogin();
 		} else {
-			ConsoleFactory.showWorkspace();
+			UpdatersWidget.init();
+			LogsWidget.init();
+			HealthWidget.init();
+			MemoryWidget.init();
+			CPUWidget.init();
+			NetworkWidget.init();
+			this.showWorkspace();
 		}
 	}
 	
 	logout() {
 		Console.sessiontoken = '';
+		window.location.reload();
 	}
 
 	refreshData() {
-		if (ConsoleFactory.listenersCount > 0 && Console.sessiontoken) {
+		if (Console.sessiontoken) {
 			Console.request(
 				"GET",
 				this.HEALTH_URL,
@@ -68,12 +80,14 @@ class Console {
 				}
 			})(this), this.CONSOLE_UPDATE_DELAY);
 		} else {
-			console.log("Can't refresh");
+			console.log("No session");
+			this.login();
 		}
 	}
 
 	showLogin() {
 		ConsoleFactory.workspace.style.visibility = 'hidden';
+		ConsoleFactory.logoutbutton.style.visibility = 'hidden';
 		var loginWindow = document.getElementsByClassName("consolelogincontainer")[0]
 		if (loginWindow) {
 			loginWindow.style.visibility = 'visible';
@@ -116,6 +130,7 @@ class Console {
 			loginWindow.style.visibility = 'hidden';
 		}
 		ConsoleFactory.workspace.style.visibility = 'visible';
+		ConsoleFactory.logoutbutton.style.visibility = 'visible';
 	}
 
 	processLogin(pw) {
@@ -131,12 +146,10 @@ class Console {
 			true,
 			(response) => { 
 				Console.sessiontoken = JSON.parse(response).token;
-				if(!Console.sessiontoken) {
-					self.showLogin();
-				} else {
-					self.showWorkspace();
+				if(Console.sessiontoken) {
 					self.refreshData();
 				}
+				self.login();
 			},
 			(status, response) => debugLog('createSession: something else other than 200 was returned')
 		);
@@ -147,6 +160,7 @@ class ConsoleFactory {
 	static #listeners = [];
 	static #widgets = [];
 	static #workspace;
+	static #logoutbutton;
 	static #workspaceContent = [];
 	
 	static get widgetsInformation() {
@@ -271,6 +285,13 @@ class ConsoleFactory {
 			this.#workspace = document.getElementsByClassName("consolepanelcontainer")[0];
 		}
 		return this.#workspace;
+	}
+	
+	static get logoutbutton() {
+		if (!this.#logoutbutton) {
+			this.#logoutbutton = document.getElementsByClassName("consoledisconnect")[0];
+		}
+		return this.#logoutbutton;
 	}
 	
 	static #isWidget(widget) {

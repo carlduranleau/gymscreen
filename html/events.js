@@ -1,10 +1,10 @@
 EVENTS_ROTATION_DEFAULT_INTERVAL = 15000;	// events rotation interval in ms
-FEED_REFRESH_DEFAULT_INTERVAL = 35000			// News feed refresh interval in ms
+FEED_REFRESH_DEFAULT_INTERVAL = 35000			// Events feed refresh interval in ms
 
-eventsRefreshTimerId = 0;			// id of the setInterval timer to load and refresh events
-eventsMoveTimerId = 0;				// id of the setInterval timer to move the next event
+eventsRefreshThread = null;			// Refresh thread
+eventsMoveThread = null;				// Move thread
 
-// events News management
+// events management
 eventsContainer = undefined	// Fixed box where events rotate
 allEventsBoxes = [];		// All available events
 visibleEventsBoxes = [];	// Currently visible events
@@ -42,6 +42,7 @@ function createEventsContainer() {
 
 // Add a new event to the available events list
 function addEvent (newEvent) {
+	console.log("addEvent");
 	if (!eventsContainer) {
 		createEventsContainer("");
 	}
@@ -114,19 +115,30 @@ function organizeEvents() {
 function animEventsBox(eventBox, xPosition, yPosition) {
 	box = eventBox.box
 	animId = eventBox.animId
+
 	x = parseInt(box.style.left);
 	y = parseInt(box.style.top);
-	stepX = x < xPosition ? 1 : -1;
-	stepY = y < yPosition ? 1 : -1;
+	stepX = x < xPosition ? 10 : -10;
+	stepY = y < yPosition ? 10 : -10;
 	if ((animId != -1) && (x == xPosition) && (y == yPosition)) {
 		stopEventsAnim(eventBox);
 		return;
 	}
 	if (x != xPosition) {
-		x += stepX;
+		if ((stepX > 0 && x < xPosition && x + stepX > xPosition) ||
+		(stepX < 0 && x > xPosition && x + stepX < xPosition)) {
+			x = xPosition;	// Next call will stop the thread
+		} else {
+			x += stepX;
+		}
 	}
 	if (y != yPosition) {
-		y += stepY;
+		if ((stepY > 0 && y < yPosition && y + stepY > yPosition) ||
+		(stepY < 0 && y > yPosition && y + stepY < yPosition)) {
+			y = yPosition;	// Next call will stop the thread
+		} else {
+			y += stepY;
+		}
 	}
 	box.style.left = x + "px";
 	box.style.top = y + "px";
@@ -134,13 +146,12 @@ function animEventsBox(eventBox, xPosition, yPosition) {
 
 // Stop events box animation timer
 function stopEventsAnim(eventBox) {
-	stopAnimThread(eventBox.animId, "Stop animation for event #" + eventBox.id);
+	ThreadManager.stopThread(eventBox.animId);
 	eventBox.animId = -1;
 }
 
 // Update screen with new nextVisibleEventsBoxes
 function rotateEvents() {
-
 	if (eventsAnimationInProgress()) {
 		waitForEventsAnimation(rotateEvents);
 		return;
@@ -153,10 +164,15 @@ function rotateEvents() {
 		for (var i = 0; i < visibleEventsBoxes.length; i++) {
 			if (!nextVisibleEventsBoxes.includes(visibleEventsBoxes[i])) {
 				if (visibleEventsBoxes[i].animId != -1) {
-					stopNewsAnim(visibleEventsBoxes[i]);
+					stopEventsAnim(visibleEventsBoxes[i]);
 				}
-				animId = startAnimThread(setInterval(animNewsBox, 5, visibleEventsBoxes[i], BOX_SPACING - 10, parseInt(eventsContainer.clientHeight) + BOX_SPACING), "Hide events New #" + visibleEventsBoxes[i].id);
-				visibleEventsBoxes[i].animId = animId;
+				//animId = startAnimThread(setInterval(animEventsBox, 5, visibleEventsBoxes[i], BOX_SPACING - 10, parseInt(eventsContainer.clientHeight) + BOX_SPACING), "Hide events New #" + visibleEventsBoxes[i].id);
+				const newX = BOX_SPACING - 10;
+				const newY = parseInt(eventsContainer.clientHeight) + BOX_SPACING;
+				const o = visibleEventsBoxes[i];
+				const thread = ThreadManager.createThread(animEventsBox, [o, newX, newY]);
+				visibleEventsBoxes[i].animId = thread.id;
+				thread.start();
 			}
 		}
 		currentHeight = 0;
@@ -166,11 +182,16 @@ function rotateEvents() {
 				nextVisibleEventsBoxes[i].box.style.top = -(parseInt(nextVisibleEventsBoxes[i].box.clientHeight) + BOX_SPACING) + "px";
 			}
 			if (nextVisibleEventsBoxes[i].animId != -1) {
-				stopNewsAnim(nextVisibleEventsBoxes[i]);
+				stopEventsAnim(nextVisibleEventsBoxes[i]);
 			}
-			animId = startAnimThread(setInterval(animNewsBox, 5, nextVisibleEventsBoxes[i], BOX_SPACING - 10, currentHeight), "Show events New #" + nextVisibleEventsBoxes[i].id);
-			nextVisibleEventsBoxes[i].animId = animId;
+			//animId = startAnimThread(setInterval(animEventsBox, 5, nextVisibleEventsBoxes[i], BOX_SPACING - 10, currentHeight), "Show events New #" + nextVisibleEventsBoxes[i].id);
+			const newX = BOX_SPACING - 10;
+			const newY = currentHeight;
+			const o = nextVisibleEventsBoxes[i];
+			const thread = ThreadManager.createThread(animEventsBox, [o, newX, newY]);
+			nextVisibleEventsBoxes[i].animId = thread.id;
 			currentHeight += parseInt(nextVisibleEventsBoxes[i].box.clientHeight);
+			thread.start();
 		}
 		visibleEventsBoxes = nextVisibleEventsBoxes;
 	}
@@ -178,7 +199,6 @@ function rotateEvents() {
 
 // Parse events data
 function loadEventsData(jsonData) {
-
 	var data = JSON.parse(jsonData);
 
 	if (data.events && data.events.length > 0) {
@@ -219,34 +239,38 @@ function loadEventsData(jsonData) {
 
 	rotateEvents();
 
-	if(eventsRefreshTimerId == 0) {
-		eventsRefreshTimerId = startAnimThread(setInterval(getRemoteEventsFeedData, getConfig("eventsFeedUpdateDelay", FEED_REFRESH_DEFAULT_INTERVAL)), "Start Feed Refresh Timer");
-		eventsMoveTimerId = startAnimThread(setInterval(rotateEvents, getConfig("eventsSwapDelay", EVENTS_ROTATION_DEFAULT_INTERVAL)), "Start events Events Move Timer");
+	if(eventsRefreshThread) {
+		ThreadManager.unregister(eventsRefreshThread);
+		ThreadManager.unregister(eventsMoveThread);
 	}
+	eventsRefreshThread = ThreadManager.createThread(getRemoteEventsFeedData, [], getConfig("eventsFeedUpdateDelay", FEED_REFRESH_DEFAULT_INTERVAL));
+	eventsMoveThread = ThreadManager.createThread(rotateEvents, [], getConfig("eventsSwapDelay", EVENTS_ROTATION_DEFAULT_INTERVAL));
+	eventsRefreshThread.start();
+	eventsMoveThread.start();
 }
 
 // Wait for an animation to finish
-function waitForEventsAnimation(nextFunction) {
+function waitForEventsAnimation(nextFunction, thread) {
 	if (eventsAnimationInProgress()) {
-		setTimeout(waitForEventsAnimation, 1000, nextFunction);
+		if (!thread) {
+			Thread.createThread(waitForEventsAnimation, [nextFunction], 1000).start();
+		}
 	} else {
+		ThreadManager.unregister(thread);
 		nextFunction();
 	}
 }
 
 // Load new data from Google Keep JSON feed
 function getRemoteEventsFeedData() {
-
 	if (eventsAnimationInProgress()) {
 		waitForEventsAnimation(getRemoteEventsFeedData);
 		return;
 	}
 
-	if(eventsRefreshTimerId != 0) {
-		stopAnimThread(eventsRefreshTimerId, "Stop Feed Refresh Timer");
-		stopAnimThread(eventsMoveTimerId, "Stop events Events Move Timer");
-		eventsRefreshTimerId = 0;
-		eventsMoveTimerId = 0;
+	if(eventsRefreshThread) {
+		eventsRefreshThread.stop();
+		eventsMoveThread.stop();
 	}
 
     var xmlhttp = new XMLHttpRequest();

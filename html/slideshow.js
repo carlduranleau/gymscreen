@@ -1,7 +1,7 @@
 imagesList = [];			// Image file list
 
-imageRotationTimerId = 0;	// Timer id for picture refresh
-imageLoadingTimerId	= 0;	// Timer id for picture loading
+imageRotationThread = null;	// Refresh thread
+imageLoadingThread	= null;	// Loading thread
 
 IMAGES_ROTATION_DEFAULT_INTERVAL = 10000;	// Images rotation interval in ms
 FEED_REFRESH_DEFAULT_INTERVAL = 30000;		// Images feed refresh interval in ms
@@ -13,10 +13,13 @@ currentVisibleImage = -1;	// Current visible image
 nextVisibleImage = 0;		// Current visible image
 
 // Wait for an animation to finish
-function waitForImageAnimation(nextFunction) {
+function waitForImageAnimation(nextFunction, thread) {
 	if (animationInProgress()) {
-		setTimeout(waitForImageAnimation, 1000, nextFunction);
+		if (!thread) {
+			Thread.createThread(waitForImageAnimation, [nextFunction], 1000).start();
+		}
 	} else {
+		ThreadManager.unregister(thread);
 		nextFunction();
 	}
 }
@@ -72,12 +75,20 @@ function switchImage () {
 	imageContainers[nextVisibleContainer].style.opacity = "0";
 	imageContainers[nextVisibleContainer].style.backgroundImage = "url(" + imagesList[nextVisibleImage].filename + ")";
 
-	animId = startAnimThread(setInterval(animImageBox, 100, imagesList[nextVisibleImage], imageContainers[nextVisibleContainer], 10), "Show picture " + imagesList[nextVisibleImage].id);
-	imagesList[nextVisibleImage].animId = animId;
+	//animId = startAnimThread(setInterval(animImageBox, 100, imagesList[nextVisibleImage], imageContainers[nextVisibleContainer], 10), "Show picture " + imagesList[nextVisibleImage].id);
+	const img = imagesList[nextVisibleImage];
+	const ctnr = imageContainers[nextVisibleContainer];
+	const threadShow = ThreadManager.createThread(animImageBox, [img, ctnr, 10]);
+	imagesList[nextVisibleImage].animId = threadShow.id;
+	threadShow.start();
 
 	if (currentVisibleImage != -1 && currentVisibleImage != nextVisibleImage) {
-		animId = startAnimThread(setInterval(animImageBox, 100, imagesList[currentVisibleImage], imageContainers[visibleContainer], 0), "Hide picture " + imagesList[currentVisibleImage].id);
-		imagesList[currentVisibleImage].animId = animId;
+		//animId = startAnimThread(setInterval(animImageBox, 100, imagesList[currentVisibleImage], imageContainers[visibleContainer], 0), "Hide picture " + imagesList[currentVisibleImage].id);
+		const img = imagesList[currentVisibleImage];
+		const ctnr = imageContainers[visibleContainer];
+		const threadHide = ThreadManager.createThread(animImageBox, [img, ctnr, 0]);
+		imagesList[currentVisibleImage].animId = threadHide.id;
+		threadHide.start();
 	}
 
 	currentVisibleImage = nextVisibleImage;
@@ -94,7 +105,7 @@ function switchImage () {
 // Stop image box animation timer
 function stopImageAnim(image) {
 	if (image && image.animId != -1) {
-		stopAnimThread(image.animId, "Stop animation for picture " + image.id);
+		ThreadManager.stopThread(image.animId);
 		image.animId = -1;
 	}
 }
@@ -163,10 +174,14 @@ function loadFilesData(jsonData) {
 
 	switchImage();
 
-	if(imageLoadingTimerId == 0) {
-		imageLoadingTimerId = startAnimThread(setInterval(getImageList, getConfig("imagesFeedUpdateDelay", FEED_REFRESH_DEFAULT_INTERVAL)), "Start Image Feed Timer");
-		imageRotationTimerId = startAnimThread(setInterval(switchImage, getConfig("imageSwapDelay", IMAGES_ROTATION_DEFAULT_INTERVAL)), "Start Image Switch Timer");
+	if (imageLoadingThread) {
+		ThreadManager.unregister(imageLoadingThread);
+		ThreadManager.unregister(imageRotationThread);
 	}
+	imageLoadingThread = ThreadManager.createThread(getImageList, [], getConfig("imagesFeedUpdateDelay", FEED_REFRESH_DEFAULT_INTERVAL));
+	imageRotationThread = ThreadManager.createThread(switchImage, [], getConfig("imageSwapDelay", IMAGES_ROTATION_DEFAULT_INTERVAL));
+	imageLoadingThread.start();
+	imageRotationThread.start();
 }
 
 // Load new data from Google Drive JSON feed
@@ -177,11 +192,9 @@ function getImageList() {
 		return;
 	}
 
-	if(imageLoadingTimerId != 0) {
-		stopAnimThread(imageLoadingTimerId, "Stop Image Feed Timer");
-		stopAnimThread(imageRotationTimerId, "Stop Image Switch Timer");
-		imageLoadingTimerId = 0;
-		imageRotationTimerId = 0;
+	if(imageLoadingThread) {
+		imageLoadingThread.stop();
+		imageRotationThread.stop();
 	}
 
     var xmlhttp = new XMLHttpRequest();

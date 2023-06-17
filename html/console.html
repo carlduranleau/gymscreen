@@ -13,9 +13,12 @@
 <script type="text/javascript" src="console_cpu.js"></script>
 <script type="text/javascript" src="console_network.js"></script>
 </head>
-<body onload="Console.init();UpdatersWidget.init();LogsWidget.init();HealthWidget.init();MemoryWidget.init();CPUWidget.init();NetworkWidget.init();">
+<body onload="Console.init();">
 	<div class="consolecontainer">
-		<div class="consoletitle">Gymnamic console</div>
+		<div class="consoletitle">
+			<div style="width:40%">Gymnamic console</div>
+			<div class="consoledisconnect"><button onclick="Console.disconnect();">Logout</button></div>
+		</div>
 		<div class="consolepanel">
 			<div class="consolepanelcontainer">
 				<!--

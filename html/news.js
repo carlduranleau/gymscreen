@@ -2,8 +2,8 @@ HIDE_MARGIN = MAX_WINDOW_WIDTH + BOX_SPACING;	// Left security margin to hide ne
 NEWS_ROTATION_DEFAULT_INTERVAL = 20000			// News rotation interval in ms
 FEED_REFRESH_DEFAULT_INTERVAL = 35000			// News feed refresh interval in ms
 
-newsRefreshTimerId = 0;		// id of the setInterval timer to load and refresh news
-newsMoveTimerId = 0;		// id of the setInterval timer to move the next news
+newsRefreshThread = null;		// Refresh thread
+newsMoveThread = null;			// Move thread
 
 // News management
 allNewsBoxes = [];			// All available news
@@ -42,6 +42,7 @@ function addNews (newNews) {
 function newsAnimationInProgress() {
 	for (var i = 0; i < allNewsBoxes.length; i++) {
 		if(allNewsBoxes[i].animId != -1) {
+			console.log("Found alive box with id #" + allNewsBoxes[i].animId);
 			return true;
 		}
 	}
@@ -102,17 +103,27 @@ function animNewsBox(newsBox, xPosition, yPosition) {
 	animId = newsBox.animId
 	x = parseInt(box.style.left);
 	y = parseInt(box.style.top);
-	stepX = x < xPosition ? 1 : -1;
-	stepY = y < yPosition ? 1 : -1;
+	stepX = x < xPosition ? 10 : -10;
+	stepY = y < yPosition ? 10 : -10;
 	if ((animId != -1) && (x == xPosition) && (y == yPosition)) {
 		stopNewsAnim(newsBox);
 		return;
 	}
 	if (x != xPosition) {
-		x += stepX;
+		if ((stepX > 0 && x < xPosition && x + stepX > xPosition) ||
+		(stepX < 0 && x > xPosition && x + stepX < xPosition)) {
+			x = xPosition;
+		} else {
+			x += stepX;
+		}
 	}
 	if (y != yPosition) {
-		y += stepY;
+		if ((stepY > 0 && y < yPosition && y + stepY > yPosition) ||
+		(stepY < 0 && y > yPosition && y + stepY < yPosition)) {
+			y = yPosition;
+		} else {
+			y += stepY;
+		}
 	}
 	box.style.left = x + "px";
 	box.style.top = y + "px";
@@ -120,7 +131,7 @@ function animNewsBox(newsBox, xPosition, yPosition) {
 
 // Stop news box animation timer
 function stopNewsAnim(newsBox) {
-	stopAnimThread(newsBox.animId, "Stop animation for news #" + newsBox.id);
+	ThreadManager.stopThread(newsBox.animId);
 	newsBox.animId = -1;
 }
 
@@ -136,8 +147,9 @@ function setZIndex() {
 
 // Update screen with new nextVisibleNewsBoxes
 function placeNewsBoxes() {
-
+	console.log("placeNewsBoxes");
 	if (newsAnimationInProgress()) {
+		console.log("Waiting...");
 		waitForNewsAnimation(placeNewsBoxes);
 		return;
 	}
@@ -153,8 +165,14 @@ function placeNewsBoxes() {
 				stopNewsAnim(visibleNewsBoxes[i]);
 			}
 			//animId = startAnimThread(setInterval(animNewsBox, 5, visibleNewsBoxes[i], MAX_WINDOW_WIDTH - BOX_SPACING - parseInt(visibleNewsBoxes[i].box.clientWidth), -(BOX_SPACING + parseInt(visibleNewsBoxes[i].box.clientHeight))), "Hide News box #" + visibleNewsBoxes[i].id);
-			animId = startAnimThread(setInterval(animNewsBox, 5, visibleNewsBoxes[i], MAX_WINDOW_WIDTH - BOX_SPACING - parseInt(visibleNewsBoxes[i].box.clientWidth), MAX_WINDOW_WIDTH + BOX_SPACING), "Hide News box #" + visibleNewsBoxes[i].id);
-			visibleNewsBoxes[i].animId = animId
+			
+			//animId = startAnimThread(setInterval(animNewsBox, 5, visibleNewsBoxes[i], MAX_WINDOW_WIDTH - BOX_SPACING - parseInt(visibleNewsBoxes[i].box.clientWidth), MAX_WINDOW_WIDTH + BOX_SPACING), "Hide News box #" + visibleNewsBoxes[i].id);
+			const newX = MAX_WINDOW_WIDTH - BOX_SPACING - parseInt(visibleNewsBoxes[i].box.clientWidth);
+			const newY = MAX_WINDOW_WIDTH + BOX_SPACING;
+			const o = visibleNewsBoxes[i];
+			const thread = ThreadManager.createThread(animNewsBox, [o, newX, newY]);
+			visibleNewsBoxes[i].animId = thread.id;
+			thread.start();
 		}
 	}
 
@@ -170,17 +188,21 @@ function placeNewsBoxes() {
 		if (nextVisibleNewsBoxes[i].animId != -1) {
 			stopNewsAnim(nextVisibleNewsBoxes[i]);
 		}
-		animId = startAnimThread(setInterval(animNewsBox, 5, nextVisibleNewsBoxes[i], MAX_WINDOW_WIDTH - BOX_SPACING - parseInt(nextVisibleNewsBoxes[i].box.clientWidth), yPosition), "Show News box #" + nextVisibleNewsBoxes[i].id);
-		nextVisibleNewsBoxes[i].animId = animId;
-
+		//animId = startAnimThread(setInterval(animNewsBox, 5, nextVisibleNewsBoxes[i], MAX_WINDOW_WIDTH - BOX_SPACING - parseInt(nextVisibleNewsBoxes[i].box.clientWidth), yPosition), "Show News box #" + nextVisibleNewsBoxes[i].id);
+		const newX = MAX_WINDOW_WIDTH - BOX_SPACING - parseInt(nextVisibleNewsBoxes[i].box.clientWidth);
+		const newY = yPosition;
+		const o = nextVisibleNewsBoxes[i];
+		const thread = ThreadManager.createThread(animNewsBox, [o, newX, newY]);
+		nextVisibleNewsBoxes[i].animId = thread.id;
 		yPosition = (yPosition + dynamicMargin + margin + parseInt(nextVisibleNewsBoxes[i].box.clientHeight));
+		thread.start();
 	}
 	visibleNewsBoxes = nextVisibleNewsBoxes;
 }
 
 // Parse news data
 function loadNewsData(jsonData) {
-
+	console.log("loadNewsData");
 	var data = JSON.parse(jsonData);
 
 	if (data.news && data.news.length > 0) {
@@ -222,34 +244,39 @@ function loadNewsData(jsonData) {
 
 	placeNewsBoxes();
 
-	if(newsRefreshTimerId == 0) {
-		newsRefreshTimerId = startAnimThread(setInterval(getRemoteNewFeedData, getConfig("newsFeedUpdateDelay", FEED_REFRESH_DEFAULT_INTERVAL)), "Start Feed Refresh Timer");
-		newsMoveTimerId = startAnimThread(setInterval(placeNewsBoxes, getConfig("newsSwapDelay", NEWS_ROTATION_DEFAULT_INTERVAL)), "Start News Move Timer");
+	if(newsRefreshThread) {
+		ThreadManager.unregister(newsRefreshThread);
+		ThreadManager.unregister(newsMoveThread);
 	}
+	newsRefreshThread = ThreadManager.createThread(getRemoteNewFeedData, [], getConfig("newsFeedUpdateDelay", FEED_REFRESH_DEFAULT_INTERVAL));
+	newsMoveThread = ThreadManager.createThread(placeNewsBoxes, [], getConfig("newsSwapDelay", NEWS_ROTATION_DEFAULT_INTERVAL));
+	newsRefreshThread.start();
+	newsMoveThread.start();
 }
 
 // Wait for an animation to finish
-function waitForNewsAnimation(nextFunction) {
+function waitForNewsAnimation(nextFunction, thread) {
 	if (newsAnimationInProgress()) {
-		setTimeout(waitForNewsAnimation, 1000, nextFunction);
+		if (!thread) {
+			Thread.createThread(waitForNewsAnimation, [nextFunction], 1000).start();
+		}
 	} else {
+		ThreadManager.unregister(thread);
 		nextFunction();
 	}
 }
 
 // Load new data from Google Keep JSON feed
 function getRemoteNewFeedData() {
-
+	console.log("getRemoteNewFeedData");
 	if (newsAnimationInProgress()) {
 		waitForNewsAnimation(getRemoteNewFeedData);
 		return;
 	}
 
-	if(newsRefreshTimerId != 0) {
-		stopAnimThread(newsRefreshTimerId, "Stop Feed Refresh Timer");
-		stopAnimThread(newsMoveTimerId, "Stop News Move Timer");
-		newsRefreshTimerId = 0;
-		newsMoveTimerId = 0;
+	if(newsRefreshThread) {
+		newsRefreshThread.stop();
+		newsMoveThread.stop();
 	}
 
     var xmlhttp = new XMLHttpRequest();

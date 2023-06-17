@@ -84,12 +84,21 @@ nav::after {
 }
 
 .consoletitle {
+  display: flex;
+  width: 100%;
   color: white;
   font-size: 35px;
   font-weight: bold;
   font-style: italic;
-  margin-bottom: 20px;
+  margin: 0px 0px 20px 0px;
   opacity: 1;
+  justify-content: space-between;
+}
+
+.consoledisconnect {
+  width:40%;
+  text-align:right;
+  visibility: hidden;
 }
 
 .consolepaneltitle {
