@@ -2,12 +2,20 @@ class UpdatersWidget {
 	static #updaterWidget;
 	
 	static init() {
-		this.#updaterWidget = ConsoleFactory.createDecoratedWidget("Updaters");
-		ConsoleFactory.subscribeToData(new UpdatersListener(this.#updaterWidget));
-		//initTabs(updaterWidget);
+		this.#updaterWidget = ConsoleFactory.createDecoratedWidget("Updaters", WidgetState.NORMAL);
 		ConsoleFactory.addWidgetToWorkspace(this.#updaterWidget);
 	}
 
+	static get instance() {
+		return this.#updaterWidget;
+	}
+
+	static onData(data) {
+		var healthData = JSON.parse(data);
+		var updaters = healthData.updaterthread.processes.map(u => `<p><b>name:</b>&nbsp;${u.name}</p><p><b>haserror:</b>&nbsp;${u.haserror}</p><p><b>lasterror:</b>&nbsp;${u.lasterror}</p><p><b>lastexecution:</b>&nbsp;${u.lastexecution}</p><p><b>lastexecutiontime:</b>&nbsp;${u.lastexecutiontime}</p><p><b>url:</b>&nbsp;${u.customdata.url}</p>`);
+		this.#updaterWidget.content.innerHTML = updaters.join('<hr>');
+	}
+	
 	static #initTabs(widget) {
 		
 		// MUST CREATE TABS HERE (Check console.html for HTML code to convert to JS)
@@ -75,14 +83,3 @@ class UpdatersWidget {
 
 }
 
-class UpdatersListener extends Listener {
-	constructor(widget) {
-		super(widget, widget.id);
-	}
-	
-	onData(data) {
-		var healthData = JSON.parse(data);
-		var updaters = healthData.updaterthread.processes.map(u => `<p><b>name:</b>&nbsp;${u.name}</p><p><b>haserror:</b>&nbsp;${u.haserror}</p><p><b>lasterror:</b>&nbsp;${u.lasterror}</p><p><b>lastexecution:</b>&nbsp;${u.lastexecution}</p><p><b>lastexecutiontime:</b>&nbsp;${u.lastexecutiontime}</p><p><b>url:</b>&nbsp;${u.customdata.url}</p>`);
-		this.widget.content.innerHTML = updaters.join('<hr>');
-	}
-}

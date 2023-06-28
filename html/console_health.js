@@ -2,15 +2,15 @@ class HealthWidget {
 	static #healthWidget;
 
 	static init() {
-		this.#healthWidget = ConsoleFactory.createDecoratedWidget("Health");
-		ConsoleFactory.subscribeToData(new HealthListener(this.#healthWidget));
+		this.#healthWidget = ConsoleFactory.createDecoratedWidget("Health", WidgetState.NORMAL, new HealthListener("HealthListener", "/health", 5000));
 		ConsoleFactory.addWidgetToWorkspace(this.#healthWidget);
 	}
 }
 
 class HealthListener extends Listener {
-	constructor(widget) {
-		super(widget, widget.id);
+	
+	constructor(name,url,delay) {
+		super(name,url,delay);
 	}
 	
 	onData(data) {
@@ -18,5 +18,6 @@ class HealthListener extends Listener {
 		var html = `<p><b>starttime:</b>&nbsp;${u.environment.starttime}</p><p><b>updaterthread.running:</b>&nbsp;${u.updaterthread.running}</p><p><b>updaterthread.processcount:</b>&nbsp;${u.updaterthread.processcount}</p>`;
 		Object.keys(u.config).forEach(c => html += `<p><b>${c}:</b>&nbsp;${u.config[c]}</p>`);
 		this.widget.content.innerHTML = html;
+		UpdatersWidget.onData(data);
 	}
 }

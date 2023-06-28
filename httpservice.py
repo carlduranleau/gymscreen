@@ -1,5 +1,6 @@
 from flask_restful import Resource
 from flask import Flask, request, send_from_directory
+from config import Config
 
 class HttpService(Resource):
 
@@ -8,6 +9,8 @@ class HttpService(Resource):
 	def get(self, path=None):
 		if path:
 			filepath = path
+			if "." not in path:
+				filepath = filepath + ".html"
 		else:
 			filepath = 'index.html'
 		response = send_from_directory(self.ROOT_HTTP_FOLDER, filepath)

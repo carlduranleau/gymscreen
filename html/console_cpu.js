@@ -1,36 +1,25 @@
 class CPUWidget {
-	OS_UPDATE_DELAY=2000;
-	OS_COMMAND_URL = "/health/os/";
-	widget;
+	static OS_UPDATE_DELAY=2000;
+	static OS_COMMAND_URL = "/health/os/";
+	static #widget;
 
 	constructor(widget) {
 		this.widget = widget;
 	}
 
 	static init() {
-		var widget = ConsoleFactory.createDecoratedWidget("CPU");
-		var instance = new CPUWidget(widget);
-		ConsoleFactory.addWidgetToWorkspace(widget);
-		instance.getOSData();
-		setInterval((function(self) {
-				return function () {
-					self.getOSData();
-				}
-			})(instance), instance.OS_UPDATE_DELAY);
+		this.#widget = ConsoleFactory.createDecoratedWidget("CPU", WidgetState.NORMAL, new CPUListener("CPUListener", this.OS_COMMAND_URL + 'top/n1/b', this.OS_UPDATE_DELAY));
+		ConsoleFactory.addWidgetToWorkspace(this.#widget);
+	}
+}
+
+class CPUListener extends Listener {
+	
+	constructor(name,url,delay) {
+		super(name,url,delay);
 	}
 
-	getOSData() {
-		const self = this;
-		Console.request(
-			"GET",
-			this.OS_COMMAND_URL + 'top/n1/b',
-			true,
-			(response) => self.dataHandler(response),
-			(status, response) => debugLog('getOSData: something else other than 200 was returned')
-		);
-	}
-	
-	dataHandler(response) {
+	onData(response) {
 		var parsed = response.replace(/(?:\r\n|\r|\n)/g, '<br>');
 		this.widget.content.innerHTML = this.getFormattedData(JSON.parse(parsed).result);
 	}

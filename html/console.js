@@ -176,9 +176,9 @@ class ConsoleFactory {
 	}
 	
 	// Create a new UI widget with title and content panel.
-	static createDecoratedWidget(title) {
+	static createDecoratedWidget(title,state,listener) {
 		try {
-			var widget = new DecoratedWidget(title);
+			var widget = new DecoratedWidget(title,state,listener);
 			this.#registerWidget(widget);
 			return widget;
 		} catch (e) {
@@ -351,9 +351,15 @@ class WidgetInformation {
 class Widget {
 	#id;
 	#rootPanel;
-	constructor() {
+	#listener;
+	#updateid;
+	constructor(listener) {
 		this.#id = (new Date()).getTime();
 		this.#build();
+		if (listener) {
+			this.#listener = listener;
+			
+		}
 	}
 
 	get id() {
@@ -376,10 +382,40 @@ class DecoratedWidget extends Widget {
 	#titlePanel;
 	#contentPanel;
 	#title;
-	constructor(title) {
-		super();
+	#state;
+	#listener;
+	constructor(title,state,listener) {
+		super(listener);
 		this.#title = title;
+		this.#state = state;
+		this.#listener = listener;
 		this.#build();
+	}
+	
+	set state(newState) {
+		if (newState && this.#state != newState) {
+			if (!this.#state | WidgetState.PAUSED != newState | WidgetState.PAUSED) {
+				if (newState | WidgetState.PAUSED) {
+					this.#listener.stop();
+					debugLog('Widget ' + this.#title + ' paused.');
+				} else {
+					this.#listener.start();
+					debugLog('Widget ' + this.#title + ' unpaused.');
+				}
+			}
+			if (!this.#state | WidgetState.MAXIMIZED != newState | WidgetState.MAXIMIZED) {
+				if (newState | WidgetState.PAUSED) {
+					debugLog('Widget ' + this.#title + ' maximized.');
+				} else {
+					debugLog('Widget ' + this.#title + ' back to normal size.');
+				}
+			}
+
+		}
+	}
+	
+	get state() {
+		return this.#state;
 	}
 	
 	get title() {
@@ -400,29 +436,84 @@ class DecoratedWidget extends Widget {
 		this.frame.appendChild(panelContent);
 		this.#titlePanel = panelTitle;
 		this.#contentPanel = panelContent;		
+		if (this.#listener) {
+			this.#listener.widget = this;
+			this.#listener.start();
+		}
 	}
 }
 
 // Interface to subscribe to data updates
 class Listener {
 	#name;
+	#url;
+	#updateid;
+	#updatedelay;
 	#widget;
-	constructor(widget, name) {
-		this.#widget = widget;
+	constructor(name, url, updatedelay) {
+		this.#url = url;
 		this.#name = name;
+		this.#updatedelay = updatedelay;
+	}
+	
+	start() {
+		debugLog("Listener '" + this.#name + "' starting.")
+		if (!this.#updateid && this.#updatedelay && this.#url) {
+			this.#updateid = setInterval((function(self) {
+				return function () {
+					self.getData();
+				}
+			})(this), this.#updatedelay);
+			debugLog("Listener '" + this.#name + "' started.")
+		}
+	}
+	
+	stop() {
+		if (this.#updateid) {
+			clearInterval(this.#updateid);
+			this.#updateid = 
+			debugLog("Listener '" + this.#name + "' stopped.")
+		}
+	}
+	
+	status() {
+		return this.#updateid ? true : false;
+	}
+	
+	set widget(w) {
+		this.#widget = w;
+	}
+	
+	get widget() {
+		return this.#widget;
 	}
 	
 	get name() {
 		return this.#name;
 	}
-
-	get widget() {
-		return this.#widget;
+	
+	getData() {
+		const self = this;
+		const url = this.#url;
+		const name = this.#name;
+		Console.request(
+			"GET",
+			url,
+			true,
+			(response) => self.onData(response),
+			(status, response) => debugLog(name + ': data request returned with the status ' + status)
+		);
 	}
 	
 	onData(data) {
 		console.log("Listener '" + this.#name + "' hasn't implemented onData method.");
 	}
+}
+
+class WidgetState {
+	static NORMAL = 0;
+	static PAUSED = 1;
+	static MAXIMIZED = 2;
 }
 
 function debugLog(msg) {
