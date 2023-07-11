@@ -1,15 +1,7 @@
 class CPUWidget {
-	static OS_UPDATE_DELAY=2000;
-	static OS_COMMAND_URL = "/health/os/";
-	static #widget;
-
-	constructor(widget) {
-		this.widget = widget;
-	}
-
 	static init() {
-		this.#widget = ConsoleFactory.createDecoratedWidget("CPU", WidgetState.NORMAL, new CPUListener("CPUListener", this.OS_COMMAND_URL + 'top/n1/b', this.OS_UPDATE_DELAY));
-		ConsoleFactory.addWidgetToWorkspace(this.#widget);
+		ConsoleFactory.addWidgetToWorkspace(
+			ConsoleFactory.createDecoratedWidget("CPU", WidgetState.DEFAULT, new CPUListener("CPUListener", '/health/os/top/n1/b', 2000)));
 	}
 }
 
@@ -19,8 +11,8 @@ class CPUListener extends Listener {
 		super(name,url,delay);
 	}
 
-	onData(response) {
-		var parsed = response.replace(/(?:\r\n|\r|\n)/g, '<br>');
+	onData(data) {
+		var parsed = data.replace(/(?:\r\n|\r|\n)/g, '<br>');
 		this.widget.content.innerHTML = this.getFormattedData(JSON.parse(parsed).result);
 	}
 	

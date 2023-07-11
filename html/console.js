@@ -202,9 +202,9 @@ class ConsoleFactory {
 		try {
 			if (this.#isWidget(widget)) {
 				if (this.#isWidgetOnWorkspace(widget)) {
-					//console.log("Widget with id '" + widget.id + "' already added to workspace.");
+					console.log("Widget with id '" + widget.id + "' already added to workspace.");
 				} else {
-					//console.log("Widget with id '" + widget.id + "' added to workspace.");
+					console.log("Widget with id '" + widget.id + "' added to workspace.");
 					this.workspace.appendChild(widget.frame);
 					this.#workspaceContent.push(widget);
 				}
@@ -253,7 +253,7 @@ class ConsoleFactory {
 						Console.instance.refreshData();
 					}
 					this.#listeners.push(listener);
-					//console.log("Listener with name '" + listener.name + "' subscribed.");
+					console.log("Listener with name '" + listener.name + "' subscribed.");
 				}
 			} else {
 				console.log("Invalid listener. Data subscription aborted.");
@@ -294,16 +294,39 @@ class ConsoleFactory {
 		return this.#logoutbutton;
 	}
 	
+	static maximize(widget) {
+		if (this.#isWidget(widget)) {
+			this.#widgets.forEach(w => {
+				if (widget != w) {
+					w.state = w.state | WidgetState.HIDDEN;
+				} else {
+					w.state = w.state | WidgetState.MAXIMIZED;
+				}
+			});
+		}
+	}
+	
+	static restore() {
+		this.#widgets.forEach(w => {
+			w.state = (w.state & ~WidgetState.HIDDEN) & ~WidgetState.MAXIMIZED;
+		});
+	}
+	
 	static #isWidget(widget) {
-		var foundwidget = this.#widgets.filter(w => w.id === widget.id);
+		var foundwidget = this.#widgets.filter(w => w.id == widget.id);
 		if (foundwidget.length > 0) {
 			return true;
 		}
 		return false;
 	}
 	
+	static getWidgetById(widgetId) {
+		var foundwidget = this.#workspaceContent.find(w => w.id == widgetId);
+		return foundwidget;
+	}
+	
 	static #isWidgetOnWorkspace(widget) {
-		var foundwidget = this.#workspaceContent.filter(w => w.id === widget.id);
+		var foundwidget = this.#workspaceContent.filter(w => w.id == widget.id);
 		if (foundwidget.length > 0) {
 			return true;
 		}
@@ -358,7 +381,7 @@ class Widget {
 		this.#build();
 		if (listener) {
 			this.#listener = listener;
-			
+			this.#listener.widget = this;
 		}
 	}
 
@@ -368,6 +391,15 @@ class Widget {
 
 	get frame() {
 		return this.#rootPanel;
+	}
+	
+	hide() {
+		this.#rootPanel.style.display = 'none'
+	}
+	
+	show(maximized) {
+		this.#rootPanel.className = 'widgetframe' + (maximized ? 'maximized' : '');
+		this.#rootPanel.style.display = 'block'
 	}
 	
 	#build() {
@@ -381,36 +413,38 @@ class Widget {
 class DecoratedWidget extends Widget {
 	#titlePanel;
 	#contentPanel;
+	#buttonPanel;
 	#title;
 	#state;
 	#listener;
 	constructor(title,state,listener) {
 		super(listener);
 		this.#title = title;
-		this.#state = state;
-		this.#listener = listener;
+		if (listener) {
+			this.#listener = listener;
+			this.#listener.widget = this;
+		}
 		this.#build();
+		this.state = (state ? state : WidgetState.DEFAULT);
 	}
 	
 	set state(newState) {
-		if (newState && this.#state != newState) {
-			if (!this.#state | WidgetState.PAUSED != newState | WidgetState.PAUSED) {
-				if (newState | WidgetState.PAUSED) {
+		if (newState != undefined && newState != this.#state) {
+			this.#state = newState;
+			if (this.#listener) {
+				if (this.#state & WidgetState.PAUSED || this.#state & WidgetState.HIDDEN) {
+					this.#titlePanel.innerHTML = this.#title + "&nbsp;(Paused)"
 					this.#listener.stop();
-					debugLog('Widget ' + this.#title + ' paused.');
 				} else {
+					this.#titlePanel.innerHTML = this.#title
 					this.#listener.start();
-					debugLog('Widget ' + this.#title + ' unpaused.');
 				}
 			}
-			if (!this.#state | WidgetState.MAXIMIZED != newState | WidgetState.MAXIMIZED) {
-				if (newState | WidgetState.PAUSED) {
-					debugLog('Widget ' + this.#title + ' maximized.');
-				} else {
-					debugLog('Widget ' + this.#title + ' back to normal size.');
-				}
+			if (this.#state & WidgetState.HIDDEN) {
+				this.hide();
+			} else {
+				this.show(this.#state & WidgetState.MAXIMIZED);
 			}
-
 		}
 	}
 	
@@ -421,25 +455,61 @@ class DecoratedWidget extends Widget {
 	get title() {
 		return this.#titlePanel;
 	}
+	
+	set title(newTitle) {
+		if (newTitle) {
+			this.#titlePanel.innerHTML = newTitle;
+			this.#title = newTitle;
+		}
+	}
 
 	get content() {
 		return this.#contentPanel;
 	}
 	
+	togglePause() {
+		if (this.#state & WidgetState.PAUSED) {
+			this.state = this.#state & ~WidgetState.PAUSED;
+		} else {
+			this.state = this.#state | WidgetState.PAUSED;
+		}
+	}
+	
+	toggleMaximized() {
+		if (this.#state & WidgetState.MAXIMIZED) {
+			ConsoleFactory.restore();
+		} else {
+			ConsoleFactory.maximize(this);
+		}
+	}
+	
 	#build() {
+		var panelTitleBar = document.createElement('div');
+		panelTitleBar.className = 'widgettitlebar';
+		
+		var panelButtons = document.createElement('div');
+		panelButtons.className = 'widgetbuttons';
+		var buttons = this.#listener ? '<span class="widgetbutton" onclick="ConsoleFactory.getWidgetById(\'' + this.id + '\').togglePause()">&#8865;</span>' : '';
+		buttons += '<span class="widgetbutton" onclick="ConsoleFactory.getWidgetById(\'' + this.id + '\').toggleMaximized()">&#8862;</span>'
+		panelButtons.innerHTML = buttons;
+		
 		var panelTitle = document.createElement('div');
 		panelTitle.className = 'widgettitle';
 		panelTitle.innerHTML = this.#title;
+		
+		panelTitleBar.appendChild(panelTitle);
+		panelTitleBar.appendChild(panelButtons);
+		
 		var panelContent = document.createElement('div');
 		panelContent.className = 'widgetcontent';
-		this.frame.appendChild(panelTitle);
+		if (this.#listener) {
+			panelContent.innerHTML = '<span style="font-style:italic">Waiting for data...</span>';
+		}
+		this.frame.appendChild(panelTitleBar);
 		this.frame.appendChild(panelContent);
 		this.#titlePanel = panelTitle;
-		this.#contentPanel = panelContent;		
-		if (this.#listener) {
-			this.#listener.widget = this;
-			this.#listener.start();
-		}
+		this.#buttonPanel = panelButtons;
+		this.#contentPanel = panelContent;
 	}
 }
 
@@ -471,7 +541,7 @@ class Listener {
 	stop() {
 		if (this.#updateid) {
 			clearInterval(this.#updateid);
-			this.#updateid = 
+			this.#updateid = undefined;
 			debugLog("Listener '" + this.#name + "' stopped.")
 		}
 	}
@@ -511,9 +581,10 @@ class Listener {
 }
 
 class WidgetState {
-	static NORMAL = 0;
-	static PAUSED = 1;
-	static MAXIMIZED = 2;
+	static DEFAULT = 0;
+	static MAXIMIZED = 1;
+	static PAUSED = 2;
+	static HIDDEN = 4;
 }
 
 function debugLog(msg) {

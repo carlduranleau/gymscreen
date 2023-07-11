@@ -1,40 +1,21 @@
 class NetworkWidget {
-	OS_UPDATE_DELAY=2000;
-	OS_COMMAND_URL = "/health/os/";
-	widget;
-
-	constructor(widget) {
-		this.widget = widget;
-	}
-
 	static init() {
-		var widget = ConsoleFactory.createDecoratedWidget("Network");
-		var instance = new NetworkWidget(widget);
-		ConsoleFactory.addWidgetToWorkspace(widget);
-		instance.getOSData();
-		setInterval((function(self) {
-				return function () {
-					self.getOSData();
-				}
-			})(instance), instance.OS_UPDATE_DELAY);
+		ConsoleFactory.addWidgetToWorkspace(
+			ConsoleFactory.createDecoratedWidget("Network", WidgetState.DEFAULT, new NetworkListener("NetworkListener", "/health/os/iwconfig/wlan0;ifconfig/wlan0", 2000)));
 	}
+}
 
-	getOSData() {
-		const self = this;
-		Console.request(
-			"GET",
-			this.OS_COMMAND_URL + 'iwconfig/wlan0;ifconfig/wlan0',
-			true,
-			(response) => self.dataHandler(response),
-			(status, response) => debugLog('getOSData: something else other than 200 was returned')
-		);
+class NetworkListener extends Listener {
+	
+	constructor(name,url,delay) {
+		super(name,url,delay);
 	}
 	
-	dataHandler(response) {
-		var parsed = response.replace(/(?:\r\n|\r|\n)/g, '<br>');
+	onData(data) {
+		var parsed = data.replace(/(?:\r\n|\r|\n)/g, '<br>');
 		this.widget.content.innerHTML = this.getFormattedData(JSON.parse(parsed).result);
 	}
-	
+
 	getFormattedData(data) {
 		var blocks = data.split('<br><br>').filter(b => b.trim());	// Split iwconfig and ifconfig information
 		return this.getWifiFormattedData(blocks[0]) + this.getNetworkFormattedData(blocks[1]);

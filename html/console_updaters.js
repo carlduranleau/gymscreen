@@ -2,7 +2,8 @@ class UpdatersWidget {
 	static #updaterWidget;
 	
 	static init() {
-		this.#updaterWidget = ConsoleFactory.createDecoratedWidget("Updaters", WidgetState.NORMAL);
+		this.#updaterWidget = ConsoleFactory.createDecoratedWidget("Updaters", WidgetState.DEFAULT);
+		//this.#updaterWidget.content.innerHTML = '<span style="font-style:italic">Waiting for data...</span>';
 		ConsoleFactory.addWidgetToWorkspace(this.#updaterWidget);
 	}
 
@@ -10,6 +11,7 @@ class UpdatersWidget {
 		return this.#updaterWidget;
 	}
 
+	// THIS WIDGET HAS NO LISTENER. IT GETS DATA FROM THE HEALTHWIDGET FEED BECAUSE THEY SHARE THE SAME DATA SOURCE.
 	static onData(data) {
 		var healthData = JSON.parse(data);
 		var updaters = healthData.updaterthread.processes.map(u => `<p><b>name:</b>&nbsp;${u.name}</p><p><b>haserror:</b>&nbsp;${u.haserror}</p><p><b>lasterror:</b>&nbsp;${u.lasterror}</p><p><b>lastexecution:</b>&nbsp;${u.lastexecution}</p><p><b>lastexecutiontime:</b>&nbsp;${u.lastexecutiontime}</p><p><b>url:</b>&nbsp;${u.customdata.url}</p>`);
@@ -80,6 +82,5 @@ class UpdatersWidget {
 			contentNews.style.display = "flex";
 		});
 	}
-
 }
 

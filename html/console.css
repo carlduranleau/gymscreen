@@ -128,7 +128,7 @@ nav::after {
   padding: 0px;
   border: 0px;
   position: relative;
-  overflow: hidden;
+  #overflow: auto;
   box-sizing: border-box;
   opacity: 0.8;
   visibility: hidden;
@@ -193,7 +193,7 @@ nav::after {
   border-radius: 8px;
   padding: 0px;
   margin: 0px;
-  overflow: hidden;
+  overflow: auto;
   #opacity: 1;
   
   #background-repeat: no-repeat;
@@ -226,15 +226,60 @@ nav::after {
   box-shadow: 0 1px 3px 0 rgba(60,64,67,0.302), 0 4px 8px 3px rgba(60,64,67,0.149);
 }
 
-.widgettitle {
+.widgetframemaximized {
+  margin: 10px;
+  width: 100%;
+  height:100%;
+  border: 2px solid red;
+  border-color: #888888;
+  position: relative;
+  overflow: hidden;
+  opacity: 1;
+  border-radius: 8px;
+  padding: 0px;
+  box-shadow: 0 1px 3px 0 rgba(60,64,67,0.302), 0 4px 8px 3px rgba(60,64,67,0.149);
+}
+
+.widgettitlebar {
+  display: flex;
+  flex-flow: row nowrap;
+  justify-content: space-between;
+  box-sizing: border-box;
   margin: 0px;
   padding: 5px;
+  position: relative;
+  overflow: hidden;
+  opacity: 1;
+}
+
+.widgettitle {
+  width: 90%;
+  margin: 0px;
+  padding: 0px;
   color: white;
   position: relative;
   font-size: 24px;
   font-weight: bold;
   font-style: italic;
   opacity: 1;
+}
+
+.widgetbuttons {
+  margin: 0px;
+  padding: 0px;
+  color: white;
+  position: relative;
+  font-size: 20px;
+  opacity: 1;
+}
+
+.widgetbutton {
+  font-family: Wingdings;
+  margin: 2px;
+  padding: 3px;
+  font-weight:bold;
+  text-align: center;
+  cursor: pointer;
 }
 
 .widgetcontent {

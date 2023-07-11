@@ -1,37 +1,18 @@
 class MemoryWidget {
-	OS_UPDATE_DELAY=2000;
-	OS_COMMAND_URL = "/health/os/";
-	widget;
-
-	constructor(widget) {
-		this.widget = widget;
-	}
-
 	static init() {
-		var widget = ConsoleFactory.createDecoratedWidget("Memory");
-		var instance = new MemoryWidget(widget);
-		ConsoleFactory.addWidgetToWorkspace(widget);
-		instance.getOSData();
-		setInterval((function(self) {
-				return function () {
-					self.getOSData();
-				}
-			})(instance), instance.OS_UPDATE_DELAY);
+		ConsoleFactory.addWidgetToWorkspace(
+			ConsoleFactory.createDecoratedWidget("Memory", WidgetState.DEFAULT, new MemoryListener("MemoryListener", "/health/os/ps/aux/--sort=-%mem", 2000)));
 	}
+}
 
-	getOSData() {
-		const self = this;
-		Console.request(
-			"GET",
-			this.OS_COMMAND_URL + 'ps/aux/--sort=-%mem',
-			true,
-			(response) => self.dataHandler(response),
-			(status, response) => debugLog('getOSData: something else other than 200 was returned')
-		);
+class MemoryListener extends Listener {
+	
+	constructor(name,url,delay) {
+		super(name,url,delay);
 	}
 	
-	dataHandler(response) {
-		var parsed = response.replace(/(?:\r\n|\r|\n)/g, '<br>');
+	onData(data) {
+		var parsed = data.replace(/(?:\r\n|\r|\n)/g, '<br>');
 		this.widget.content.innerHTML = this.getFormattedData(JSON.parse(parsed).result);
 	}
 	

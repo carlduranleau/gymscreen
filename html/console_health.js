@@ -2,7 +2,7 @@ class HealthWidget {
 	static #healthWidget;
 
 	static init() {
-		this.#healthWidget = ConsoleFactory.createDecoratedWidget("Health", WidgetState.NORMAL, new HealthListener("HealthListener", "/health", 5000));
+		this.#healthWidget = ConsoleFactory.createDecoratedWidget("Health", WidgetState.DEFAULT, new HealthListener("HealthListener", "/health", 5000));
 		ConsoleFactory.addWidgetToWorkspace(this.#healthWidget);
 	}
 }
