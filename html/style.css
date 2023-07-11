@@ -28,7 +28,7 @@ body {
 .timewidget {
   background-color: #000000;
   position: fixed;
-  font-size: 20px;
+  font-size: 24px;
   font-family: "Lucida Console", "Courrier New", monospace;
   font-style: normal;
   font-weight: bold;
@@ -47,7 +47,7 @@ body {
 
 .newsbox {
   font-family: "Comic Sans MS", cursive, sans-serif;
-  font-size: 14px;
+  font-size: 17px;
   color: #666666;
   width: 510px;
   border: 0px;
@@ -60,7 +60,7 @@ body {
 
 .newsbox h3 {
   font-family: "Comic Sans MS", cursive, sans-serif;
-  font-size: 15px;
+  font-size: 19px;
   font-weight: bold;
   color: #555555;
 }
@@ -82,7 +82,7 @@ body {
 
 .eventsbox {
   font-family: "Comic Sans MS", cursive, sans-serif;
-  font-size: 14px;
+  font-size: 17px;
   color: #666666;
   width: 1310px;
   padding: 0px;
@@ -93,7 +93,7 @@ body {
 
 .eventsbox h3 {
   font-family: "Comic Sans MS", cursive, sans-serif;
-  font-size: 15px;
+  font-size: 19px;
   font-weight: bold;
   color: #555555;
 }
