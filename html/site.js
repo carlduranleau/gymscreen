@@ -302,6 +302,10 @@ class Thread {
 		}
 	}
 	
+	get interval() {
+		return this.#interval;
+	}
+	
 	get running() {
 		return this.#running;
 	}
