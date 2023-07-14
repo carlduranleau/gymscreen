@@ -56,6 +56,7 @@ class Console {
 			MemoryWidget.init();
 			CPUWidget.init();
 			NetworkWidget.init();
+			CMDWidget.init();
 			this.showWorkspace();
 		}
 	}
@@ -87,7 +88,7 @@ class Console {
 
 	showLogin() {
 		ConsoleFactory.workspace.style.visibility = 'hidden';
-		ConsoleFactory.logoutbutton.style.visibility = 'hidden';
+		//ConsoleFactory.logoutbutton.style.visibility = 'hidden';
 		var loginWindow = document.getElementsByClassName("consolelogincontainer")[0]
 		if (loginWindow) {
 			loginWindow.style.visibility = 'visible';
@@ -130,7 +131,7 @@ class Console {
 			loginWindow.style.visibility = 'hidden';
 		}
 		ConsoleFactory.workspace.style.visibility = 'visible';
-		ConsoleFactory.logoutbutton.style.visibility = 'visible';
+		//ConsoleFactory.logoutbutton.style.visibility = 'visible';
 	}
 
 	processLogin(pw) {
@@ -160,7 +161,7 @@ class ConsoleFactory {
 	static #listeners = [];
 	static #widgets = [];
 	static #workspace;
-	static #logoutbutton;
+	//static #logoutbutton;
 	static #workspaceContent = [];
 	
 	static get widgetsInformation() {
@@ -286,14 +287,14 @@ class ConsoleFactory {
 		}
 		return this.#workspace;
 	}
-	
+	/*
 	static get logoutbutton() {
 		if (!this.#logoutbutton) {
 			this.#logoutbutton = document.getElementsByClassName("consoledisconnect")[0];
 		}
 		return this.#logoutbutton;
 	}
-	
+	*/
 	static maximize(widget) {
 		if (this.#isWidget(widget)) {
 			this.#widgets.forEach(w => {
