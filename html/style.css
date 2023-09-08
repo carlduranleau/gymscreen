@@ -47,7 +47,7 @@ body {
 
 .newsbox {
   font-family: "Comic Sans MS", cursive, sans-serif;
-  font-size: 17px;
+  font-size: 16px;
   color: #666666;
   width: 510px;
   border: 0px;
@@ -66,7 +66,7 @@ body {
 }
 
 .eventscontainer {
-  background-color: #ccffff;
+  background-color: #a5c6ef;
   width: 1310px;
   height: 252px;
   top: 0px;
@@ -82,7 +82,7 @@ body {
 
 .eventsbox {
   font-family: "Comic Sans MS", cursive, sans-serif;
-  font-size: 17px;
+  font-size: 16px;
   color: #666666;
   width: 1310px;
   padding: 0px;

@@ -80,7 +80,7 @@ class ImagesUpdater(UpdateProcess):
 		drivefiles = results.get('files', [])
 		files = dict()
 		for file in drivefiles:
-			if file.get('fileExtension') is not None and file.get('fileExtension').lower() in self.file_extensions:
+			if file.get('fileExtension') is not None and file.get('fileExtension').lower() in self.file_extensions and not ' ' in file.get('name'):
 				files[file.get('name')] = file.get('id')
 		return files
 	
