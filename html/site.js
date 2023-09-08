@@ -3,40 +3,16 @@ NEWS_FEED_URL = "http://localhost:5002/feed"		// News feed url
 EVENTS_FEED_URL = "http://localhost:5002/calendarfeed"		// Events feed url
 FILE_URL = "http://localhost:5002/images"	// Images feed url
 CONFIG_URL = "http://localhost:5002/config"	// Configuration feed url
+NUMBERS_PATTERN = /^[0-9]+$/;				// Pattern to detect digits only values
 MAX_WINDOW_WIDTH = window.innerWidth;		// Browser width
 MAX_WINDOW_HEIGHT = window.innerHeight;		// Browser height
 BOX_SPACING = 20;							// General element spacing
-CONFIG_UPDATE_DELAY = 60000					// Configuration expiration delay in ms
+CONFIG_UPDATE_DELAY = 600000					// Configuration expiration delay in ms
 animationThreads = new Map();						// List of active animation threads
 configurationMap = new Map();				// Configuration Map (property, value)
 maintenanceMode = false;
 DEBUG = false;
 CONFIG_REFRESH_IN_PROGRESS = false;
-
-/*
-function startAnimThread(animId, name) {
-	if (maintenanceMode) {
-		debugLog ("Thread creation disabled in maintenance mode");
-		stopAnimThread(animId, name);
-	}
-	if (animationThreads.has(name) && animId != animationThreads.get(name)) {
-		debugLog("WARN: Trying to start the new thread " + name + " with id #" + animId + " over the already active thread #" + animationThreads.get(name));
-		debugLog("WARN: Terminating thread #" + animationThreads.get(name));
-		clearInterval(animationThreads.get(name));
-   	}
-	debugLog("Adding thread #" + animId + ": " + name);
-	animationThreads.set(name, animId);
-	return animId;
-}
-
-function stopAnimThread(animId, name) {
-	debugLog("Stopping thread #" + animId + ": " + name);
-	if (animationThreads.has(name)) {
-		animationThreads.delete(name)
-	}
-	clearInterval(animId);
-}
-*/
 
 function clearThreads() {
 	if (animationThreads.size > 0) {
@@ -100,31 +76,25 @@ function refreshConfig() {
 
 	xmlhttp.onreadystatechange = function() {
         if (xmlhttp.readyState == XMLHttpRequest.DONE) {
-           if (xmlhttp.status == 200) {
-           		configurationMap.clear();
-           		var properties = xmlhttp.responseText.split("\n");
-			properties.forEach(function(entry) {
-				if (entry.includes("=")) {
-					property = entry.split("=");
-					key = property[0];
-					value = property[1];
-					configurationMap.set(key.trim(), value.trim());
-				}
-			});
-			if (configurationMap.size > 0) {
+			if (xmlhttp.status == 200) {
+				debugLog ("Config received: " + xmlhttp.responseText);
+				var config = JSON.parse(xmlhttp.responseText)
+				Object.keys(config).forEach(key => {
+					var value = config[key];
+					configurationMap.set(key, value.match(NUMBERS_PATTERN) ? parseInt(value) : value);
+				});
 				configurationMap.set("expiration", (new Date()).getTime() + CONFIG_UPDATE_DELAY);
+				debugLog ("Config parsed:");
+				debugLog (configurationMap);
+				handleMaintenanceMode();
+			} else if (xmlhttp.status == 400) {
+				debugLog('There was an error 400');
+			} else {
+				debugLog('something else other than 200 was returned');
 			}
-			handleMaintenanceMode();
-           }
-           else if (xmlhttp.status == 400) {
-		debugLog('There was an error 400');
-           }
-           else {
-		debugLog('something else other than 200 was returned');
-           }
-           CONFIG_REFRESH_IN_PROGRESS = false;
-        }
-    };
+			CONFIG_REFRESH_IN_PROGRESS = false;
+		}
+	};
 
     xmlhttp.open("GET", CONFIG_URL, true);
     xmlhttp.send();
@@ -314,15 +284,7 @@ class Thread {
 		return this.#id;
 	}
 }
-
-// Event handling
-/*
-window.onresize = function (event) {
-	MAX_WINDOW_WIDTH = window.innerWidth;
-	MAX_WINDOW_HEIGHT = window.innerHeight;
-	HIDE_MARGIN = MAX_WINDOW_WIDTH + BOX_SPACING;
-}
-*/
+refreshConfig();
 window.onload = function(event) {
 	initTimeWidget();
 }

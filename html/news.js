@@ -13,9 +13,9 @@ nextTopNews = 0;			// Index of the next news to be displayed first
 visibleNewsTotalHeight = 0;		// Total height of all visible news box
 
 // Create UI news box and hide it
-function createNewsBox(title, message, color) {
+function createNewsBox(title, message, color, pinned) {
 	newsBox = document.createElement("div");
-	newsBox.setAttribute("class", "newsbox");
+	newsBox.setAttribute("class", "newsbox"); //pinned == "True" ? "newsboxpinned" : "newsbox");
 	boxContainer = document.createElement("p");
 	newsBox.appendChild(boxContainer);
 	titleContainer = document.createElement("h3");
@@ -35,7 +35,7 @@ function createNewsBox(title, message, color) {
 
 // Add a new news to the available news list
 function addNews (newNews) {
-	var news = new News(newNews.id, createNewsBox(newNews.title, newNews.content, newNews.color));
+	var news = new News(newNews.id, createNewsBox(newNews.title, newNews.content, newNews.color, newNews.pinned));
 	allNewsBoxes.push(news);
 }
 
@@ -197,7 +197,6 @@ function placeNewsBoxes() {
 // Parse news data
 function loadNewsData(jsonData) {
 	var data = JSON.parse(jsonData);
-
 	if (data.news && data.news.length > 0) {
 		for (var j = 0; j < data.news.length; j++) {
 			found = false;
@@ -208,6 +207,7 @@ function loadNewsData(jsonData) {
 					messageElement = allNewsBoxes[i].box.getElementsByTagName("p")[1];
 					messageElement.innerHTML = data.news[j].content;
 					allNewsBoxes[i].box.style.backgroundColor = data.news[j].color;
+					//allNewsBoxes[i].box.className = data.news[j].pinned == "True" ? "newsboxpinned" : "newsbox";
 					found = true;
 					break;
 				}

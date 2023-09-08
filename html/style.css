@@ -58,6 +58,19 @@ body {
   opacity: 0.9;
 }
 
+.newsboxpinned {
+  font-family: "Comic Sans MS", cursive, sans-serif;
+  font-size: 16px;
+  color: #666666;
+  width: 510px;
+  border: 0px;
+  border-radius: 8px;
+  padding: 10px;
+  position: absolute;
+  box-shadow: 0 1px 3px 0 rgba(150,64,67,0.6), 0 4px 8px 3px rgba(150,64,67,0.6);
+  opacity: 0.9;
+}
+
 .newsbox h3 {
   font-family: "Comic Sans MS", cursive, sans-serif;
   font-size: 19px;

@@ -35,6 +35,6 @@ class NewsFeeder:
 				json_news += ","
 			else:
 				json_news = ''
-			json_news += '{{"id":"{}","title":"{}","content":"{}","color":"{}"}}'.format(news.id, news.title.replace('\n', '</br>').replace('  ', '&nbsp;&nbsp;'), news.text.replace('\n', '</br>').replace('  ', '&nbsp;&nbsp;'), self._getColor(news.color))
+			json_news += '{{"id":"{}","title":"{}","content":"{}","color":"{}","pinned":"{}"}}'.format(news.id, news.title.replace('\n', '</br>').replace('  ', '&nbsp;&nbsp;'), news.text.replace('\n', '</br>').replace('  ', '&nbsp;&nbsp;'), self._getColor(news.color), news.pinned)
 
 		return '{"news":[' + json_news + ']}'
