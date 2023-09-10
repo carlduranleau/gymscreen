@@ -27,7 +27,7 @@ class CMDWidget {
 				const menuPanel = document.getElementsByClassName("consoletitle")[0]
 				menuPanel.appendChild(frame);
 				
-				this.addMenu("Reload page", () => location.reload());
+				this.addMenu("Reload page", () => this.#executeRequest("/health/os/sh/reloadPage", "Reload page"));
 				this.addMenu("Restart service", () => this.#executeRequest("/health/os/pkill/-x/python", "Restart service"));
 				this.addMenu("Restart server", () => this.#executeRequest("/health/os/shutdown/-r/now", "Restart server"));
 				this.addMenu("Shutdown server", () => this.#executeRequest("/health/os/shutdown/-h/now", "Shutdown server"));

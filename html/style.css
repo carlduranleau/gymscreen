@@ -38,8 +38,8 @@ body {
   left: 30px;
   margin: 0px;
   padding: 0px;
-  height: 50px;
-  width: 240px;
+  height: 55px;
+  width: 260px;
   z-index: 200;
   border: 0px;
   border-radius: 8px;
@@ -48,7 +48,8 @@ body {
 .newsbox {
   font-family: "Comic Sans MS", cursive, sans-serif;
   font-size: 16px;
-  color: #666666;
+  font-weight: bold;
+  color: #282861;
   width: 510px;
   border: 0px;
   border-radius: 8px;
@@ -61,6 +62,7 @@ body {
 .newsboxpinned {
   font-family: "Comic Sans MS", cursive, sans-serif;
   font-size: 16px;
+  font-weight: bold;
   color: #666666;
   width: 510px;
   border: 0px;
@@ -96,7 +98,8 @@ body {
 .eventsbox {
   font-family: "Comic Sans MS", cursive, sans-serif;
   font-size: 16px;
-  color: #666666;
+  font-weight: bold;
+  color: #282861;
   width: 1310px;
   padding: 0px;
   margin: 0px;
