@@ -18,12 +18,12 @@ class Logger(threading.Thread):
 		self.writing = False
 	
 	def run(self):
-		Environment.logger.log('Logger started ({}{})'.format(self.cache_path, self.filename))
+		self.log('Logger started ({}{})'.format(self.cache_path, self.filename))
 		self.running = True
 		while(self.running):
 			self._sleep_thread(self.update_delay)
 			self.update()
-		Environment.logger.log('Logger stopped')
+		self.log('Logger stopped')
 	
 	# Stop thread
 	def shutdown(self, signum=None, frame=None):

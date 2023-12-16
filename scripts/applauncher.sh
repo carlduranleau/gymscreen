@@ -6,5 +6,6 @@ if [ "${isrunning}" != "0" ]; then
 fi
 cd ~/gymnamic
 errorcode=0
-while [ $errorcode -eq 0 ]; do python app.py; errorcode=$?; sleep 1; done
+touch /home/pi/gymnamic/app.lock
+while [ $errorcode -eq 0 ] && [ -f /home/pi/gymnamic/app.lock ]; do python app.py; errorcode=$?; sleep 1; done
 
